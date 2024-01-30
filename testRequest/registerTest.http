@@ -1,0 +1,10 @@
+@base_url = http://localhost:3000
+
+### Inscription d'un utilisateur ###
+POST {{base_url}}/users/register
+Content-Type: application/json
+
+{
+  "firstName": "test",
+  "lastName": "5"
+}
