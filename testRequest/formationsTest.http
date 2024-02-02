@@ -1,0 +1,6 @@
+### Obtenir toutes les formations
+GET http://localhost:3000/formation/getAllFormations
+
+
+### Obtenir une formation par ID
+GET http://localhost:3000/formation/getFormationById/1

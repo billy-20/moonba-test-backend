@@ -1,10 +1,65 @@
-@base_url = http://localhost:3000
-
-### Inscription d'un utilisateur ###
-POST {{base_url}}/users/register
+### Test de l'inscription d'un utilisateur particulier
+POST http://localhost:3000/users/register
 Content-Type: application/json
 
 {
-  "firstName": "test",
-  "lastName": "5"
+  "email": "particulier@example.com",
+  "adresse": "123 Rue de la Liberté",
+  "type": "Particulier",
+  "nom": "Doe",
+  "prenom": "John",
+  "password": "aze"
 }
+
+### Test de l'inscription d'un utilisateur particulier
+POST http://localhost:3000/users/register
+Content-Type: application/json
+
+{
+  "email": "bilal@example.com",
+  "adresse": "123 Rue de la Liberté",
+  "type": "Particulier",
+  "nom": "bilal",
+  "prenom": "aze",
+  "password": "aze"
+}
+
+
+### Test de l'inscription d'un utilisateur entreprise
+POST http://localhost:3000/users/register
+Content-Type: application/json
+
+{
+  "email": "entreprise@example.com",
+  "adresse": "456 Avenue des Entreprises",
+  "type": "Entreprise",
+  "nom_entreprise": "TechCorp",
+  "numero_tva": "FR123456789",
+  "password": "aze"
+}
+
+### Test de l'inscription d'un utilisateur entreprise
+POST https://test-backend-gluw.onrender.com/users/register
+Content-Type: application/json
+
+{
+  "email": "entreprise@example.com",
+  "adresse": "456 Avenue des Entreprises",
+  "type": "Entreprise",
+  "nom_entreprise": "TechCorp",
+  "numero_tva": "FR123456789",
+  "password": "aze"
+}
+
+
+
+### Test de la connexion d'un utilisateur
+POST https://test-backend-gluw.onrender.com/users/login
+Content-Type: application/json
+
+{
+  "email": "bilal@example.com",
+  "password": "aze"
+}
+
+//https://test-backend-gluw.onrender.com/users/register

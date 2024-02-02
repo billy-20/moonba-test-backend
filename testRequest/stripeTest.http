@@ -1,0 +1,10 @@
+### Test de Création d'une Intention de Paiement avec Stripe
+
+POST http://localhost:3000/stripe/create-payment-intent
+Content-Type: application/json
+
+{
+    "price": 1, 
+    "currency": "eur",
+    "payment_method_types": "card"
+}
