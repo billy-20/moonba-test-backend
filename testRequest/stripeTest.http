@@ -8,3 +8,26 @@ Content-Type: application/json
     "currency": "eur",
     "payment_method_types": "card"
 }
+
+###
+POST http://localhost:3000/stripe/create-payment-intent-formation
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NCwiZW1haWwiOiJiaWxseUBleGFtcGxlLmNvbSIsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzA3MjE0MDc5LCJleHAiOjE3MDcyMTc2Nzl9.IMntEGciG5NlIo2dcUr-m-F0_Pyi3A9h1GPwod3ZrUU
+Content-Type: application/json
+
+{
+    "price": 1, 
+    "currency": "eur",
+    "payment_method_types": "card"
+}
+
+
+### Création d'une intention de paiement pour une formation
+POST http://localhost:3000/stripe/create-payment-intent-formation
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MjEsImVtYWlsIjoiYmlsYWwuZWwuaGFkZGFkaTc2QGdtYWlsLmNvbSIsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzA3Mjk4MzA0LCJleHAiOjE3MDczMDE5MDR9.lLIeRI8M8MtKjwgGFsK2pz6QXqbf761-CCIH42ZVqpk
+
+{
+    "formationId": 1,
+    "price": 10,
+    "clientId": 21
+}

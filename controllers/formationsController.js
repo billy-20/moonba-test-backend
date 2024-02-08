@@ -4,6 +4,7 @@ const Formation = require('../models/formationModel');
 const getAll = async (req, res) => {
   try {
     const formations = await Formation.getAllFormations();
+    console.log("all formations ");
     res.status(200).json(formations);
   } catch (error) {
     console.error(error);

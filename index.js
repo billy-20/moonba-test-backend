@@ -6,6 +6,7 @@ const userRoutes = require('./routes/userRoutes');
 const stripeRoutes = require('./routes/stripe');
 const formationRoutes= require('./routes/formationRoutes');
 const cors = require('cors');
+const inscriptionRoutes= require('./routes/InscriptionRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -18,7 +19,7 @@ app.use(cors());
 app.use('/users', userRoutes);
 app.use('/stripe', stripeRoutes);
 app.use('/formation', formationRoutes);
-
+app.use('/clients',inscriptionRoutes )
 
 // Démarrage du serveur
 app.listen(PORT, () => {

@@ -1,0 +1,38 @@
+###
+# GET /clients/:clientId/inscriptions - Get inscriptions by client ID
+###
+
+# Replace :clientId with the actual client ID
+GET http://localhost:3000/clients/22/inscriptions
+Content-Type: application/json
+
+###
+
+# Example response when successful
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+[
+    {
+        "id_inscription": 1,
+        "id_client": 123,
+        "id_formation": 456,
+        "statut_paiement": "Payé",
+        "date_inscription": "2024-02-07T12:00:00Z"
+    },
+    {
+        "id_inscription": 2,
+        "id_client": 123,
+        "id_formation": 789,
+        "statut_paiement": "Payé",
+        "date_inscription": "2024-02-07T13:00:00Z"
+    }
+]
+
+###
+
+# Example response when no inscriptions found
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+[]

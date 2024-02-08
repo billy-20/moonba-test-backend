@@ -3,7 +3,7 @@ POST http://localhost:3000/users/register
 Content-Type: application/json
 
 {
-  "email": "particulier@example.com",
+  "email": "bilal.el.haddadi76@gmail.com",
   "adresse": "123 Rue de la Liberté",
   "type": "Particulier",
   "nom": "Doe",
@@ -12,14 +12,14 @@ Content-Type: application/json
 }
 
 ### Test de l'inscription d'un utilisateur particulier
-POST http://localhost:3000/users/register
+POST https://test-backend-gluw.onrender.com/users/register
 Content-Type: application/json
 
 {
-  "email": "bilal@example.com",
+  "email": "billy@example.com",
   "adresse": "123 Rue de la Liberté",
   "type": "Particulier",
-  "nom": "bilal",
+  "nom": "billy",
   "prenom": "aze",
   "password": "aze"
 }
@@ -43,11 +43,22 @@ POST https://test-backend-gluw.onrender.com/users/register
 Content-Type: application/json
 
 {
-  "email": "entreprise@example.com",
+  "email": "test@example.com",
   "adresse": "456 Avenue des Entreprises",
   "type": "Entreprise",
-  "nom_entreprise": "TechCorp",
+  "nom_entreprise": "test",
   "numero_tva": "FR123456789",
+  "password": "aze"
+}
+
+
+
+### Test de la connexion d'un utilisateur
+POST http://localhost:3000/users/login
+Content-Type: application/json
+
+{
+  "email": "bilal.el.haddadi76@gmail.com",
   "password": "aze"
 }
 
@@ -58,7 +69,7 @@ POST https://test-backend-gluw.onrender.com/users/login
 Content-Type: application/json
 
 {
-  "email": "bilal@example.com",
+  "email": "billy@example.com",
   "password": "aze"
 }
 
