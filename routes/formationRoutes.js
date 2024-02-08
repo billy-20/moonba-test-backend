@@ -9,4 +9,7 @@ router.get('/getAllFormations', formationController.getAll);
 // Route pour obtenir une formation par ID
 router.get('/getFormationById/:id', formationController.getById);
 
+
+router.delete('/formation/:id', formationController.deleteFormation);
+
 module.exports = router;

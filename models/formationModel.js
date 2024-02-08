@@ -24,6 +24,19 @@ class Formation {
     }
   }
 
+  static async deleteFormation(id) {
+    const query = 'DELETE FROM formations WHERE id_formations = $1 RETURNING *';
+    const values = [id];
+  
+    try {
+      const result = await pool.query(query, values);
+      return result.rows[0];
+    } catch (error) {
+      throw error;
+    }
+  }
+  
+
   static async getFormationById(id) {
     const query = 'SELECT * FROM formations WHERE id_formations = $1';
     const values = [id];
