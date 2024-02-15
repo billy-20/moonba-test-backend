@@ -9,21 +9,25 @@ sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
 class User {
 
-  static async createUser(email, adresse, type, nom, prenom, nom_entreprise, numero_tva,password) {
+  static async createUser(email, adresse, type, nom, prenom, nom_entreprise, numero_tva, password) {
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
     let query;
     let values;
-    const saltRounds = 10; // Vous pouvez ajuster le nombre de tours
 
-    const hashedPassword = await bcrypt.hash(password, saltRounds);
+    // Insertion dans la table Users avec le rôle "Client" par défaut
+    query = 'INSERT INTO Users (email, password, role) VALUES ($1, $2, $3) RETURNING id_user';
+    values = [email, hashedPassword, 'Client'];
+    const user = await pool.query(query, values);
+    const id_user = user.rows[0].id_user;
 
     // Insertion dans la table Clients
-    query = 'INSERT INTO Clients (adresse, email, type,password) VALUES ($1, $2, $3 , $4) RETURNING id_client';
-    values = [adresse, email, type , hashedPassword];
+    query = 'INSERT INTO Clients (id_user, adresse, type) VALUES ($1, $2, $3) RETURNING id_client';
+    values = [id_user, adresse, type];
     const client = await pool.query(query, values);
-
     const id_client = client.rows[0].id_client;
 
-    // Insertion dans la table appropriée en fonction du type
+    // Insertion dans la table Particulier ou Entreprise en fonction du type
     if (type === 'Particulier') {
       query = 'INSERT INTO Particulier (id_client, nom, prenom) VALUES ($1, $2, $3)';
       values = [id_client, nom, prenom];
@@ -31,36 +35,43 @@ class User {
       query = 'INSERT INTO Entreprise (id_client, nom_entreprise, numero_tva) VALUES ($1, $2, $3)';
       values = [id_client, nom_entreprise, numero_tva];
     }
-
     await pool.query(query, values);
 
+    // Envoi de l'email de bienvenue
     try {
       await User.sendWelcomeEmail(email);
     } catch (error) {
       console.error('Erreur lors de l\'envoi de l\'email:', error);
-      // Gérez l'erreur comme vous le souhaitez
     }
-    return { id_client, email, type };
+
+    return { id_user, email, role: 'Client' };
   }
   
 
   static async authenticate(email, password) {
-    const query = 'SELECT * FROM Clients WHERE email = $1';
+    // Ajuster la requête pour sélectionner les utilisateurs depuis la table Users
+    const query = 'SELECT id_user, email, password, role FROM Users WHERE email = $1';
     const values = [email];
 
     try {
       const result = await pool.query(query, values);
-      const user = result.rows[0];
+      if (result.rows.length > 0) {
+        const user = result.rows[0];
 
-      if (user && await bcrypt.compare(password, user.password)) {
-        return { id: user.id_client, email: user.email, role: user.role };
+        if (await bcrypt.compare(password, user.password)) {
+          // Retourne les informations de l'utilisateur si le mot de passe est correct
+          return { id: user.id_user, email: user.email, role: user.role };
+        } else {
+          throw new Error('Invalid credentials');
+        }
       } else {
-        throw new Error('Invalid credentials');
+        throw new Error('User not found');
       }
     } catch (error) {
       throw error;
     }
   }
+
 
 
   static async sendWelcomeEmail(email) {

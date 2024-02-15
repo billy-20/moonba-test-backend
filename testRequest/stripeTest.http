@@ -11,7 +11,7 @@ Content-Type: application/json
 
 ###
 POST http://localhost:3000/stripe/create-payment-intent-formation
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NCwiZW1haWwiOiJiaWxseUBleGFtcGxlLmNvbSIsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzA3MjE0MDc5LCJleHAiOjE3MDcyMTc2Nzl9.IMntEGciG5NlIo2dcUr-m-F0_Pyi3A9h1GPwod3ZrUU
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJlbnRyZXByaXNlQGV4YW1wbGUuY29tIiwicm9sZSI6IkNsaWVudCIsImlhdCI6MTcwNzkxNzIxNiwiZXhwIjoxNzA3OTIwODE2fQ.N0hNwj2lgCYmMLmiCPuy8digqEZDqLWwPlwRwKULr9U
 Content-Type: application/json
 
 {

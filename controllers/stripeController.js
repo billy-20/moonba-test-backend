@@ -13,13 +13,21 @@ exports.createPaymentIntentForFormation = async (req, res) => {
     try {
         const { formationId, clientId } = req.body; // Récupération du clientId depuis la requête
 
+
+        const checkInscriptionQuery = 'SELECT * FROM Inscriptions WHERE id_client = $1 AND id_formations = $2 AND statut_inscription = $3';
+        const inscriptionCheckResult = await pool.query(checkInscriptionQuery, [clientId, formationId, 'Confirmé']);
+        if (inscriptionCheckResult.rows.length > 0) {
+            // Inscription déjà confirmée pour cette formation
+            return res.status(400).send({ error: 'Vous avez déjà payé cette formation.' });
+        }
+        
         // Optionnel : Récupérer le prix de la formation depuis la base de données si le prix n'est pas envoyé depuis le frontend
         let price;
         if (req.body.price) {
             price = req.body.price;
         } else {
             // Supposons que votre table de formations a une colonne 'prix'
-            const formationQuery = 'SELECT prix FROM formations WHERE id_formation = $1';
+            const formationQuery = 'SELECT prix FROM formations WHERE id_formations = $1';
             const formationResult = await pool.query(formationQuery, [formationId]);
             if (formationResult.rows.length > 0) {
                 price = formationResult.rows[0].prix; // Utiliser le prix depuis la base de données
@@ -51,16 +59,44 @@ exports.createPaymentIntentForFormation = async (req, res) => {
 async function handlePaymentConfirmation(clientId, formationId,price) {
     // Logique pour enregistrer l'inscription dans votre base de données
     // et envoyer un email de confirmation via SendGrid
+   
+    const sessionQuery = 'SELECT id_session FROM Sessions WHERE id_formations = $1 AND nombre_places > 0 LIMIT 1';
+    let sessionId;
+    try {
+        const sessionResult = await pool.query(sessionQuery, [formationId]);
+        if (sessionResult.rows.length > 0) {
+            sessionId = sessionResult.rows[0].id_session;
+        } else {
+            console.error('Aucune session disponible pour cette formation.');
+            return; // Stopper l'exécution si aucune session disponible
+        }
+    } catch (error) {
+        console.error('Erreur lors de la récupération d\'une session disponible:', error);
+        return; // Gérer l'erreur comme approprié
+    }
     const inscriptionDate = new Date().toISOString();
     const statutPaiement = 'Payé';
+    const statutInscription='Confirmé';
 
-    const query = 'INSERT INTO Inscriptions (id_client, id_formation, statut_paiement, date_inscription) VALUES ($1, $2, $3, $4) RETURNING id_inscription';
-    const values = [clientId, formationId, statutPaiement, inscriptionDate];
+    const query = 'INSERT INTO Inscriptions (id_client, id_formations, id_session, statut_paiement, date_inscription, statut_inscription) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id_inscription';
+    const values = [clientId, formationId, sessionId, statutPaiement, inscriptionDate, statutInscription];
+
 
     try {
         const result = await pool.query(query, values);
         const idInscription = result.rows[0].id_inscription;
         console.log(`Inscription enregistrée avec succès. ID: ${idInscription}`);
+
+        const decrementPlacesQuery = 'UPDATE sessions SET nombre_places = nombre_places - 1 WHERE id_formations = $1 AND nombre_places > 0 RETURNING nombre_places';
+        const decrementResult = await pool.query(decrementPlacesQuery, [formationId]);
+    
+        if (decrementResult.rows.length > 0) {
+            const updatedPlaces = decrementResult.rows[0].nombre_places;
+            console.log(`Nombre de places mis à jour pour la formation ${formationId}. Places restantes: ${updatedPlaces}`);
+        } else {
+            console.log('Erreur ou aucune place restante pour décrémenter');
+            // Vous pourriez vouloir gérer ce cas spécifiquement, par exemple, en annulant l'inscription ou en informant l'utilisateur.
+        }
 
         // Supposons que vous ayez une fonction pour récupérer l'email du client
         const clientEmail = await getClientEmail(clientId); // Vous devez implémenter cette fonction

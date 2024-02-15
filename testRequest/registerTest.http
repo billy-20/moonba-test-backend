@@ -58,7 +58,7 @@ POST http://localhost:3000/users/login
 Content-Type: application/json
 
 {
-  "email": "bilal.el.haddadi76@gmail.com",
+  "email": "entreprise@example.com",
   "password": "aze"
 }
 
@@ -69,7 +69,7 @@ POST https://test-backend-gluw.onrender.com/users/login
 Content-Type: application/json
 
 {
-  "email": "billy@example.com",
+  "email": "entreprise@example.com",
   "password": "aze"
 }
 

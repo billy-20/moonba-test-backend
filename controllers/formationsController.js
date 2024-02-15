@@ -3,7 +3,7 @@ const Formation = require('../models/formationModel');
 // Récupérer toutes les formations
 const getAll = async (req, res) => {
   try {
-    const formations = await Formation.getAllFormations();
+    const formations = await Formation.getAllFormationsWithSessions();
     console.log("all formations ");
     res.status(200).json(formations);
   } catch (error) {

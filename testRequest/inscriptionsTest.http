@@ -36,3 +36,12 @@ HTTP/1.1 200 OK
 Content-Type: application/json
 
 []
+
+
+###
+GET http://localhost:3000/sessions/sessionsDisponibles/1
+
+
+###
+GET http://localhost:3000/clients/formations/1/inscriptions
+Accept: application/json

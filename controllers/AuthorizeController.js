@@ -7,7 +7,6 @@ class AuthController {
 
     try {
       const user = await User.authenticate(email, password);
-      let clientId = user.id;
       if (user) {
         // Créer un token JWT
         const token = jwt.sign(
@@ -16,9 +15,8 @@ class AuthController {
           { expiresIn: '1h' } // Durée de validité du token
         );
 
-        res.json({ message: "Login successful", token , clientId });
-        console.log(clientId);
-        console.log("login OK");
+        // clientId n'est plus utilisé dans cette version car id_user représente l'identifiant unique dans Users
+        res.json({ message: "Login successful", token, role: user.role , clientId : user.id});
       } else {
         res.status(401).json({ message: "Invalid credentials" });
       }
