@@ -3,6 +3,7 @@
 // Import des dépendances
 const express = require('express');
 const inscriptionController = require('../controllers/InscriptionController');
+const auth = require('../controllers/AuthorizeController');
 
 // Initialisation du routeur express
 const router = express.Router();
@@ -15,7 +16,7 @@ router.put('/annuler/:inscriptionId', inscriptionController.annulerInscription);
 router.get('/:clientId/inscription/:formationId', inscriptionController.checkInscription);
 
 
-router.get('/formations/:formationId/inscriptions', inscriptionController.getInscriptionsByFormation);
+router.get('/formations/:formationId/inscriptions',auth.checkAdmin, inscriptionController.getInscriptionsByFormation);
 
 // Dans votre fichier de routes
 

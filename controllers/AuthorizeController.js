@@ -25,6 +25,28 @@ class AuthController {
       res.status(500).json({ error: 'Internal Server Error' });
     }
   }
+
+
+// Middleware pour vérifier le token et le rôle
+ static async checkAdmin(req, res, next){
+    try {
+        const token = req.headers.authorization.split(" ")[1]; // Supposons que le token est envoyé en tant que "Bearer <token>"
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+        if (decoded.role !== 'Admin') {
+            return res.status(403).json({ message: "Accès refusé" });
+        }
+
+        // Ajouter les informations décodées à l'objet de requête pour utilisation ultérieure
+        req.user = decoded;
+
+        next(); // Passer au prochain middleware ou route handler si l'utilisateur est un admin
+    } catch (error) {
+        return res.status(401).json({ message: "Authentification échouée" });
+    }
+}
+
+
 }
 
 module.exports = AuthController;

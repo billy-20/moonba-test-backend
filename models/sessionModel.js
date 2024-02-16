@@ -19,6 +19,34 @@ static async getSessionsDisponibles(formationId) {
     }
 }
 
+static async assignerSessionAUneFormation(formationId, dateSession, nombrePlaces) {
+    const client = await pool.connect();
+
+    try {
+        await client.query('BEGIN');
+
+        const insertQuery = `
+            INSERT INTO sessions (id_formations, date, nombre_places)
+            VALUES ($1, $2, $3)
+            RETURNING *;
+        `;
+
+        const values = [formationId, dateSession, nombrePlaces];
+
+        const result = await client.query(insertQuery, values);
+
+        await client.query('COMMIT');
+        console.log("Session assignée avec succès à la formation.");
+        return result.rows[0]; // Retourner les détails de la session créée
+    } catch (error) {
+        await client.query('ROLLBACK');
+        console.error("Erreur lors de l'assignation de la session à la formation: ", error.message);
+        throw new Error("Erreur lors de l'assignation de la session à la formation: " + error.message);
+    } finally {
+        client.release();
+    }
+}
+
 static async changeSession(inscriptionId, newSessionId) {
     const client = await pool.connect();
     try {

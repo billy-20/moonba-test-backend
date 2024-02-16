@@ -4,3 +4,49 @@ GET http://localhost:3000/formation/getAllFormations
 
 ### Obtenir une formation par ID
 GET http://localhost:3000/formation/getFormationById/2
+
+
+### update les info d'une une formation 
+PUT http://localhost:3000/formation/updateFormation/1 HTTP/1.1
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiZW1haWwiOiJiaWxseUBleGFtcGxlLmNvbSIsInJvbGUiOiJBZG1pbiIsImlhdCI6MTcwODAwNTc3NywiZXhwIjoxNzA4MDA5Mzc3fQ.Ji8vQTzBpatA3wDuud8vaHx0EBGoq6cJvjCfPTsKjp0
+Content-Type: application/json
+
+
+{
+    "nomFormation": "Nom Formation Modifié",
+    "description": "Nouvelle description de la formation",
+    "niveau": "Avancé",
+    "prix": 300,
+    "duree": 30
+}
+
+
+### add  formation 
+POST http://localhost:3000/formation/addFormation HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiZW1haWwiOiJiaWxseUBleGFtcGxlLmNvbSIsInJvbGUiOiJBZG1pbiIsImlhdCI6MTcwODAwOTM0NSwiZXhwIjoxNzA4MDEyOTQ1fQ.BiNBkKr1mMneeLMSkHPTB9mS8yUAeie4x7k5TUZ3UNI
+
+{
+    "nomFormation": "Développement Full Stack",
+    "description": "Apprenez à créer des applications web complètes avec Node.js, React, et plus encore.",
+    "niveau": "Intermédiaire",
+    "prix": 1200,
+    "duree": 3
+}
+
+
+### get all without sessions
+GET http://localhost:3000/formation/getAllFormationsWithoutSessions
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiZW1haWwiOiJiaWxseUBleGFtcGxlLmNvbSIsInJvbGUiOiJBZG1pbiIsImlhdCI6MTcwODA3NjYwMSwiZXhwIjoxNzA4MDgwMjAxfQ.FMgt4Cu6G2YPBZE0zMdr9EmJ8Ta3PqNU9g6qWqHxsMk
+
+
+###
+POST http://localhost:3000/sessions/assignerSession HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiZW1haWwiOiJiaWxseUBleGFtcGxlLmNvbSIsInJvbGUiOiJBZG1pbiIsImlhdCI6MTcwODA3NjYwMSwiZXhwIjoxNzA4MDgwMjAxfQ.FMgt4Cu6G2YPBZE0zMdr9EmJ8Ta3PqNU9g6qWqHxsMk
+
+{
+    "formationId": "5",
+    "dateSession": "2024-03-15",
+    "nombrePlaces": 20
+}

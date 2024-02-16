@@ -13,6 +13,27 @@ class Formation {
     }
   }
 
+
+  static async getAllFormationsWithoutSessions() {
+    const query = `
+        SELECT f.id_formations, f.nom_formation, f.description, f.niveau, f.prix, f.duree
+        FROM formations f
+        LEFT JOIN sessions s ON f.id_formations = s.id_formations
+        WHERE s.id_formations IS NULL
+        ORDER BY f.id_formations
+    `;
+  
+    try {
+        const result = await pool.query(query);
+        // Si vous souhaitez renvoyer uniquement les formations sans les sessions, 
+        // puisque par définition ces formations n'ont pas de sessions.
+        return result.rows;
+    } catch (error) {
+        throw error;
+    }
+  }
+  
+
   static async getAllFormationsWithSessions() {
     const query = `
         SELECT f.id_formations, f.nom_formation, f.description, f.niveau, f.prix, f.duree, s.id_formations as session_id, s.date as session_date, s.nombre_places
@@ -95,6 +116,28 @@ class Formation {
       throw error;
     }
   }
+
+  static async updateFormation(id, nomFormation, description, niveau, prix, duree) {
+    const query = `
+        UPDATE formations 
+        SET nom_formation = $2, description = $3, niveau = $4, prix = $5, duree = $6
+        WHERE id_formations = $1
+        RETURNING *;
+    `;
+    const values = [id, nomFormation, description, niveau, prix, duree];
+
+    try {
+      const result = await pool.query(query, values);
+      if (result.rows.length > 0) {
+        return result.rows[0];
+      } else {
+        throw new Error('Formation non trouvée ou mise à jour échouée.');
+      }
+    } catch (error) {
+      throw error;
+    }
+}
+
 
 }
 

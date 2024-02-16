@@ -12,6 +12,17 @@ const getAll = async (req, res) => {
   }
 };
 
+const getAllWithoutSessions = async (req, res) => {
+  try {
+    const formations = await Formation.getAllFormationsWithoutSessions();
+    console.log("all formations without sessions ");
+    res.status(200).json(formations);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Une erreur est survenue lors de la récupération des formations.' });
+  }
+};
+
 const deleteFormation = async (req, res) => {
   const { id } = req.params;
   try {
@@ -27,6 +38,34 @@ const deleteFormation = async (req, res) => {
   }
 };
 
+const updateFormation = async(req, res)=>{
+
+  const { id } = req.params;
+  const { nomFormation, description, niveau, prix, duree } = req.body;
+
+  try {
+      const updatedFormation = await Formation.updateFormation(id, nomFormation, description, niveau, prix, duree);
+      res.json(updatedFormation);
+  } catch (error) {
+      res.status(400).json({ message: error.message });
+  }
+
+
+}
+
+const createFormation = async(req, res)=>{
+
+  const { nomFormation, description, niveau, prix, duree } = req.body;
+
+  try {
+      const newFormation = await Formation.createFormation( nomFormation, description, niveau, prix, duree);
+      res.json(newFormation);
+  } catch (error) {
+      res.status(400).json({ message: error.message });
+  }
+
+
+}
 
 // Récupérer une formation par ID
 const getById = async (req, res) => {
@@ -47,5 +86,8 @@ const getById = async (req, res) => {
 module.exports = {
   getAll,
   getById,
-  deleteFormation
+  deleteFormation,
+  updateFormation,
+  createFormation,
+  getAllWithoutSessions
 };

@@ -25,6 +25,17 @@ const sessionController = {
         } catch (error) {
             res.status(500).json({ error: error.message });
         }
+    },
+    //static async assignerSessionAUneFormation(formationId, dateSession, nombrePlaces) {
+
+    assignerSession : async (req, res) => {
+        const { formationId, dateSession, nombrePlaces } = req.body;
+        try {
+            const result = await Session.assignerSessionAUneFormation(formationId, dateSession,nombrePlaces);
+            res.status(200).json(result);
+        } catch (error) {
+            res.status(500).json({ error: error.message });
+        }
     }
 };
 
