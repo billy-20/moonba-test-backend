@@ -111,7 +111,7 @@ async function handlePaymentConfirmation(clientId, formationId,price) {
 
 async function getClientEmail(clientId) {
     // Implémentez la logique pour récupérer l'email du client depuis la base de données
-    const queryEmail = 'SELECT email FROM Clients WHERE id_client = $1';
+    const queryEmail = 'SELECT email FROM Users WHERE id_user = $1';
     const resultEmail = await pool.query(queryEmail, [clientId]);
     if (resultEmail.rows.length > 0) {
         return resultEmail.rows[0].email;
@@ -215,10 +215,11 @@ async function sendConfirmationEmail(email, formationId, price, clientId) {
     const pdfBytes = await pdfDoc.save();
     const pdfBase64 = Buffer.from(pdfBytes).toString('base64');
 
+
     // Configuration de l'email avec pièce jointe PDF
     const msg = {
         to: email,
-        from: 'bilalelhaddadi.pro@gmail.com', // Votre adresse email SendGrid
+        from: 'formations@moonba-studio.com', // Votre adresse email SendGrid
         subject: 'Confirmation de votre inscription à la formation',
         text: `Votre paiement a été accepté et vous êtes maintenant inscrit à la formation. Nom de la formation: ${nameFormation}`,
         html: `<strong>Votre paiement a été accepté et vous êtes maintenant inscrit à la formation.</strong> Nom de la formation: ${nameFormation}`,

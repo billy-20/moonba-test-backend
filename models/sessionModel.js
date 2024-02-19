@@ -19,19 +19,19 @@ static async getSessionsDisponibles(formationId) {
     }
 }
 
-static async assignerSessionAUneFormation(formationId, dateSession, nombrePlaces) {
+static async assignerSessionAUneFormation(formationId, dateSession, nombrePlaces, adresse, info_supplementaire ) {
     const client = await pool.connect();
 
     try {
         await client.query('BEGIN');
 
         const insertQuery = `
-            INSERT INTO sessions (id_formations, date, nombre_places)
-            VALUES ($1, $2, $3)
+            INSERT INTO sessions (id_formations, date, nombre_places, adresse ,info_supplementaire)
+            VALUES ($1, $2, $3 , $4 , $5)
             RETURNING *;
         `;
 
-        const values = [formationId, dateSession, nombrePlaces];
+        const values = [formationId, dateSession, nombrePlaces ,adresse , info_supplementaire];
 
         const result = await client.query(insertQuery, values);
 

@@ -16,21 +16,48 @@ class Inscription {
         }
     }
     static async annulerInscription(inscriptionId) {
-      //DELETE FROM formations WHERE id_formations = $1 RETURNING *
-        const query = 'DELETE FROM Inscriptions WHERE id_inscription = $1 RETURNING *';
-        const values = [ inscriptionId];
-
+        // Commence par récupérer l'id_session avant de supprimer l'inscription
+        const getSessionQuery = 'SELECT id_session FROM Inscriptions WHERE id_inscription = $1';
+        const deleteQuery = 'DELETE FROM Inscriptions WHERE id_inscription = $1 RETURNING *';
+        const values = [inscriptionId];
+    
         try {
-            const result = await pool.query(query, values);
-            if (result.rows.length > 0) {
-                return result.rows[0];
+            // Récupérer l'id_session de l'inscription
+            const sessionResult = await pool.query(getSessionQuery, values);
+            if (sessionResult.rows.length > 0) {
+                const sessionId = sessionResult.rows[0].id_session;
+    
+                // Procéder à la suppression de l'inscription
+                const deleteResult = await pool.query(deleteQuery, values);
+                if (deleteResult.rows.length > 0) {
+                    // Mise à jour réussie, augmenter le nombre de places de la session
+                    await this.augmenterNombrePlaces(sessionId);
+    
+                    return deleteResult.rows[0];
+                } else {
+                    throw new Error('Inscription non trouvée.');
+                }
             } else {
-                throw new Error('Inscription non trouvée.');
+                throw new Error('Session associée à l\'inscription non trouvée.');
             }
         } catch (error) {
             throw error;
         }
     }
+    // Méthode pour augmenter le nombre de places d'une session
+static async augmenterNombrePlaces(sessionId) {
+    const query = 'UPDATE Sessions SET nombre_places = nombre_places + 1 WHERE id_session = $1 RETURNING *';
+    try {
+        const result = await pool.query(query, [sessionId]);
+        if (result.rows.length > 0) {
+            return result.rows[0];
+        } else {
+            throw new Error('Session non trouvée ou mise à jour du nombre de places échouée.');
+        }
+    } catch (error) {
+        throw new Error('Erreur lors de la mise à jour du nombre de places de la session : ' + error.message);
+    }
+}
     static async checkInscription (clientId, formationId) {
         const query = `
           SELECT statut_inscription

@@ -29,9 +29,9 @@ const sessionController = {
     //static async assignerSessionAUneFormation(formationId, dateSession, nombrePlaces) {
 
     assignerSession : async (req, res) => {
-        const { formationId, dateSession, nombrePlaces } = req.body;
+        const { formationId, dateSession, nombrePlaces, adresse, info_supplementaire } = req.body;
         try {
-            const result = await Session.assignerSessionAUneFormation(formationId, dateSession,nombrePlaces);
+            const result = await Session.assignerSessionAUneFormation(formationId, dateSession,nombrePlaces, adresse,info_supplementaire);
             res.status(200).json(result);
         } catch (error) {
             res.status(500).json({ error: error.message });

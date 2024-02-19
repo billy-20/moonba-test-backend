@@ -77,8 +77,8 @@ class User {
   static async sendWelcomeEmail(email) {
     const msg = {
         to: email,
-        from: 'bilalelhaddadi.pro@gmail.com', // Utilisez l'adresse email validée par SendGrid
-        subject: 'Bienvenue sur Notre Site!',
+        from: 'formations@moonba-studio.com', // Utilisez l'adresse email validée par SendGrid
+        subject: 'Bienvenue sur notre site!',
         text: 'Nous sommes ravis de vous accueillir parmi nous.',
         html: '<strong>Nous sommes ravis de vous accueillir parmi nous.</strong>',
     };

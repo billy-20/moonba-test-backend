@@ -1,5 +1,5 @@
 ### Obtenir toutes les formations
-GET http://localhost:3000/formation/getAllFormations
+GET https://test-backend-gluw.onrender.com/formation/getAllFormations
 
 
 ### Obtenir une formation par ID
@@ -43,10 +43,14 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiZW1haWwiO
 ###
 POST http://localhost:3000/sessions/assignerSession HTTP/1.1
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiZW1haWwiOiJiaWxseUBleGFtcGxlLmNvbSIsInJvbGUiOiJBZG1pbiIsImlhdCI6MTcwODA3NjYwMSwiZXhwIjoxNzA4MDgwMjAxfQ.FMgt4Cu6G2YPBZE0zMdr9EmJ8Ta3PqNU9g6qWqHxsMk
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiZW1haWwiOiJiaWxseUBleGFtcGxlLmNvbSIsInJvbGUiOiJBZG1pbiIsImlhdCI6MTcwODMzMzQ4MCwiZXhwIjoxNzA4MzM3MDgwfQ.zXh1paXFVLJWeIPPpj-yyNtwEqT7yxx0GrW-PlKMf7U
 
 {
-    "formationId": "5",
+    "formationId": "7",
     "dateSession": "2024-03-15",
-    "nombrePlaces": 20
+    "nombrePlaces": 20, 
+    "adresse":"rue du test 345",
+    "info_supplementaire":"parking disponible a la rue de rr 23"
 }
+
+//static async assignerSessionAUneFormation(formationId, dateSession, nombrePlaces, adresse, info_supplementaire ) {
