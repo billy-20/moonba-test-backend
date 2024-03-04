@@ -1,6 +1,9 @@
 // sessionController.js
 
 const Session = require('../models/sessionModel'); // Assurez-vous que le chemin d'accès est correct
+const express = require('express');
+const router = express.Router();
+const PDFDocument = require('pdfkit');
 
 const sessionController = {
     getSessionsDisponibles: async (req, res) => {
@@ -15,6 +18,47 @@ const sessionController = {
         } catch (error) {
             res.status(500).json({ error: error.message });
         }
+    },
+    getAllSessionsWithInscription: async (req, res) => {
+        try {
+            const sessions = await Session.getAllSessionsWithInscription();
+            if (sessions.length > 0) {
+                res.status(200).json(sessions);
+            } else {
+                res.status(404).json({ message: 'Aucune session disponible trouvée pour cette formation.' });
+            }
+        } catch (error) {
+            res.status(500).json({ error: error.message });
+        }
+    },
+
+    getInscriptionsParSession : async(req, res) =>{
+        const { sessionId } = req.params; 
+        console.log(sessionId);
+
+        try {
+            const inscrits = await Session.getInscritsParSession(sessionId);
+            res.json(inscrits);
+            // Création d'un nouveau document PDF
+        
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ error: error.message });
+        }
+    },
+
+    addNombrePlaces : async(req, res) =>{
+        const { sessionId } = req.params; 
+
+        try {
+            const reponse = await Session.addNombrePlaces(sessionId);
+            res.json(reponse);
+        
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ error: error.message });
+        }
+
     },
 
     changeSession : async (req, res) => {

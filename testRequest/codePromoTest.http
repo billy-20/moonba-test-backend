@@ -1,0 +1,35 @@
+###
+POST http://localhost:3000/promoCode/createCodePromo HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NDMsImVtYWlsIjoiYmlsYWxlbGhhZGRhZGkucHJvQGdtYWlsLmNvbSIsInJvbGUiOiJBZG1pbiIsImlhdCI6MTcwOTIwMDUxOCwiZXhwIjoxNzA5MjA0MTE4fQ.qsmhGfEh6PU3Q0K-vofluFwrprPQIjVH7AlYJCt1dOQ
+
+{
+    "code": "TEST123456",
+    "discount": 50,
+    "start_date": "2023-01-01", 
+    "end_date":"2023-12-31",
+    "is_active": true
+}
+
+###
+GET http://localhost:3000/promoCode/getAllPromoCodes HTTP/1.1
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NDMsImVtYWlsIjoiYmlsYWxlbGhhZGRhZGkucHJvQGdtYWlsLmNvbSIsInJvbGUiOiJBZG1pbiIsImlhdCI6MTcwOTIwMTI5MCwiZXhwIjoxNzA5MjA0ODkwfQ.MojyYVy9LdF7A7lper9Mqm10UlVcUsLZZqfhGxSzk9Q
+
+
+###
+DELETE http://localhost:3000/promoCode/deletePromoCode/7 HTTP/1.1
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NDMsImVtYWlsIjoiYmlsYWxlbGhhZGRhZGkucHJvQGdtYWlsLmNvbSIsInJvbGUiOiJBZG1pbiIsImlhdCI6MTcwOTIwMTI5MCwiZXhwIjoxNzA5MjA0ODkwfQ.MojyYVy9LdF7A7lper9Mqm10UlVcUsLZZqfhGxSzk9Q
+
+
+###
+PUT http://localhost:3000/promoCode/updatePromoCode/7 HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NDMsImVtYWlsIjoiYmlsYWxlbGhhZGRhZGkucHJvQGdtYWlsLmNvbSIsInJvbGUiOiJBZG1pbiIsImlhdCI6MTcwOTIwMTI5MCwiZXhwIjoxNzA5MjA0ODkwfQ.MojyYVy9LdF7A7lper9Mqm10UlVcUsLZZqfhGxSzk9Q
+
+{
+    "code":"test updated",
+    "discount": 60, 
+    "start_date": "2023-11-23", 
+    "end_date": "2023-11-24", 
+    "is_active": false 
+}

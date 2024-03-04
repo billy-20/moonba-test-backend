@@ -15,6 +15,10 @@ router.put('/annuler/:inscriptionId', inscriptionController.annulerInscription);
 
 router.get('/:clientId/inscription/:formationId', inscriptionController.checkInscription);
 
+router.get('/verify', inscriptionController.verify);
+
+
+
 
 router.get('/formations/:formationId/inscriptions',auth.checkAdmin, inscriptionController.getInscriptionsByFormation);
 

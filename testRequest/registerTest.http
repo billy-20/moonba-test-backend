@@ -11,12 +11,17 @@ Content-Type: application/json
   "password": "aze"
 }
 
+
+
+
+
+
 ### Test de l'inscription d'un utilisateur particulier
 POST https://test-backend-gluw.onrender.com/users/register
 Content-Type: application/json
 
 {
-  "email": "billy@example.com",
+  "email": "test34@example.com",
   "adresse": "123 Rue de la Liberté",
   "type": "Particulier",
   "nom": "billy",
@@ -24,19 +29,43 @@ Content-Type: application/json
   "password": "aze"
 }
 
+###
+POST http://localhost:3000/users/register
+Content-Type: application/json
+
+{
+  "email": "bilalelhaddadi.pro@gmail.com",
+  "adresse": "123 Rue Exemple",
+  "type": "Entreprise",
+  "numero_telephone": "0123456789",
+  "nom": "Doe",
+  "prenom": "John",
+  "password": "aze"
+}
+
+###verif status de user 
+GET http://localhost:3000/users/verifStatus?verificationToken=d62e8836-e0a4-4b97-b54f-55d77148995d
+
+###
+GET http://localhost:3000/clients/verify?token=6ce5274d-22a0-415d-a5df-c6db2d6b9a82
+
 
 ### Test de l'inscription d'un utilisateur entreprise
 POST http://localhost:3000/users/register
 Content-Type: application/json
 
 {
-  "email": "entreprise@example.com",
+  "email": "bilal.el.haddadi227@gmail.com",
   "adresse": "456 Avenue des Entreprises",
   "type": "Entreprise",
+  "numero_telephone":123456789,
   "nom_entreprise": "TechCorp",
   "numero_tva": "FR123456789",
   "password": "aze"
 }
+
+### Test de la route de vérification de l'utilisateur
+GET http://localhost:3000/clients/verify?token=95e109cd-46f1-4374-976b-aa558f3f3dfd
 
 ### Test de l'inscription d'un utilisateur entreprise
 POST https://test-backend-gluw.onrender.com/users/register
@@ -58,9 +87,12 @@ POST http://localhost:3000/users/login
 Content-Type: application/json
 
 {
-  "email": "billy@example.com",
+  "email": "bilalelhaddadi.pro@gmail.com",
   "password": "aze"
 }
+
+//https://test-backend-gluw.onrender.com
+
 
 
 
@@ -72,5 +104,16 @@ Content-Type: application/json
   "email": "billy@example.com",
   "password": "aze"
 }
+
+###
+PUT http://localhost:3000/users/updateUser/38
+Content-Type: application/json
+
+{
+  "newPassword": "aze"
+}
+
+###
+GET http://localhost:3000/users/clientInfo/39
 
 //https://test-backend-gluw.onrender.com/users/register

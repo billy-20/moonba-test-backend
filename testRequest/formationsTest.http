@@ -21,25 +21,38 @@ Content-Type: application/json
 }
 
 
+
+
+### delete foramtion
+DELETE http://localhost:3000/formation/deleteFormation/1 HTTP/1.1
+
+
 ### add  formation 
 POST http://localhost:3000/formation/addFormation HTTP/1.1
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiZW1haWwiOiJiaWxseUBleGFtcGxlLmNvbSIsInJvbGUiOiJBZG1pbiIsImlhdCI6MTcwODAwOTM0NSwiZXhwIjoxNzA4MDEyOTQ1fQ.BiNBkKr1mMneeLMSkHPTB9mS8yUAeie4x7k5TUZ3UNI
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NDMsImVtYWlsIjoiYmlsYWxlbGhhZGRhZGkucHJvQGdtYWlsLmNvbSIsInJvbGUiOiJBZG1pbiIsImlhdCI6MTcwODk0NDg5OSwiZXhwIjoxNzA4OTQ4NDk5fQ.hCoFZAukX7GYYLdb4mziY8J8HsJF4PAk3Idv7UTliHc
 
 {
-    "nomFormation": "Développement Full Stack",
+    "nomFormation": "DOT NET ",
     "description": "Apprenez à créer des applications web complètes avec Node.js, React, et plus encore.",
     "niveau": "Intermédiaire",
-    "prix": 1200,
+    "prix": 25,
     "duree": 3
 }
+
+### get all without sessions in backend deployed
+GET https://test-backend-gluw.onrender.com/formation/getAllFormationsWithSessions
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJiaWxseUBleGFtcGxlLmNvbSIsInJvbGUiOiJBZG1pbiIsImlhdCI6MTcwODM1MDM4OSwiZXhwIjoxNzA4MzUzOTg5fQ.V7IfkctYwy-Qd6R_FuFmil2GChb_aQXWTb_CyJPfKos
+
+###
+GET http://localhost:3000/formation/getFormationDetails/2
 
 
 ### get all without sessions
 GET http://localhost:3000/formation/getAllFormationsWithoutSessions
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiZW1haWwiOiJiaWxseUBleGFtcGxlLmNvbSIsInJvbGUiOiJBZG1pbiIsImlhdCI6MTcwODA3NjYwMSwiZXhwIjoxNzA4MDgwMjAxfQ.FMgt4Cu6G2YPBZE0zMdr9EmJ8Ta3PqNU9g6qWqHxsMk
 
-
+//eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJiaWxseUBleGFtcGxlLmNvbSIsInJvbGUiOiJBZG1pbiIsImlhdCI6MTcwODM1MDM4OSwiZXhwIjoxNzA4MzUzOTg5fQ.V7IfkctYwy-Qd6R_FuFmil2GChb_aQXWTb_CyJPfKos
 ###
 POST http://localhost:3000/sessions/assignerSession HTTP/1.1
 Content-Type: application/json
@@ -53,4 +66,24 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiZW1haWwiO
     "info_supplementaire":"parking disponible a la rue de rr 23"
 }
 
-//static async assignerSessionAUneFormation(formationId, dateSession, nombrePlaces, adresse, info_supplementaire ) {
+
+###
+GET http://localhost:3000/sessions/sessionsDisponibles/5
+
+
+
+
+###
+GET http://localhost:3000/sessions/listeInscrits/5
+
+
+###
+GET http://localhost:3000/sessions/getallSessions
+
+//https://test-backend-gluw.onrender.com
+
+
+
+### update les info d'une une formation 
+PUT http://localhost:3000/sessions/addNombrePlaces/15 
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NDMsImVtYWlsIjoiYmlsYWxlbGhhZGRhZGkucHJvQGdtYWlsLmNvbSIsInJvbGUiOiJBZG1pbiIsImlhdCI6MTcwOTEyNzM3NCwiZXhwIjoxNzA5MTMwOTc0fQ.P0m0yz6SYEIaY1YP_lwwJfasw1ENn5V3nW9NovZ-T68

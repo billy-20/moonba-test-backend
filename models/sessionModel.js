@@ -3,7 +3,85 @@ const pool = require('../db');
 
 class Session {
    
-// Dans votre SessionModel.js ou un fichier similaire
+
+    static async getInscritsParSession(sessionId) {
+        const query = `
+            SELECT 
+                i.id_session, 
+                u.email, 
+                c.type, 
+                c.adresse, 
+                c.numero_telephone,
+                CASE 
+                    WHEN c.type = 'Particulier' THEN p.prenom || ' ' || p.nom
+                    WHEN c.type = 'Entreprise' THEN e.nom_entreprise
+                END as nom
+            FROM Inscriptions i
+            JOIN Clients c ON i.id_client = c.id_client
+            JOIN Users u ON c.id_user = u.id_user
+            LEFT JOIN particulier p ON c.id_client = p.id_client
+            LEFT JOIN entreprise e ON c.id_client = e.id_client
+            WHERE i.id_session = $1
+        `;
+        try {
+            const result = await pool.query(query, [sessionId]);
+            if (result.rows.length === 0) {
+                console.log('Aucune inscription trouvée pour cette session.');
+                return [];
+            }
+            return result.rows;
+        } catch (error) {
+            console.error('Erreur lors de la récupération des inscrits pour la session :', error);
+            throw new Error('Erreur lors de la récupération des inscrits pour la session : ' + error.message);
+        }
+    }
+    
+
+    static async getAllSessionsWithInscription() {
+        const query = `
+            SELECT DISTINCT s.id_session, s.adresse /* Assurez-vous d'ajuster les colonnes selon votre schéma */
+            FROM Sessions s
+            JOIN Inscriptions i ON s.id_session = i.id_session
+            WHERE EXISTS (
+                SELECT 1
+                FROM Inscriptions ins
+                WHERE ins.id_session = s.id_session
+            )
+        `;
+        try {
+            const result = await pool.query(query);
+            if (result.rows.length === 0) {
+                console.log('Aucune session avec inscription trouvée.');
+                return [];
+            }
+            return result.rows;
+        } catch (error) {
+            console.error('Erreur lors de la récupération des sessions avec inscriptions :', error);
+            throw new Error('Erreur lors de la récupération des sessions avec inscriptions : ' + error.message);
+        }
+    }
+    
+static async addNombrePlaces(idSession){
+
+    const query = `UPDATE sessions 
+                    SET nombre_places = nombre_places+1
+                    WHERE id_session = $1
+                    RETURNING *`;
+
+
+    try {
+        const result = await pool.query(query , [idSession]);
+        if (result.rows.length === 0) {
+            console.log('Aucune session trouvee');
+            return [];
+        }
+        return result.rows;
+    } catch (error) {
+        console.error('Erreur lors de la récupération des sessions  :', error);
+        throw new Error('Erreur lors de la récupération des sessions  : ' + error.message);
+    }
+}
+
 
 static async getSessionsDisponibles(formationId) {
     const query = `
@@ -63,6 +141,21 @@ static async changeSession(inscriptionId, newSessionId) {
         if (a_change_de_session && nb_changes >= 2) {
             console.log("Nombre maximal de changements de session déjà effectué.");
             throw new Error('Nombre maximal de changements de session déjà effectué.');
+        }
+
+        const sessionQuery = 'SELECT date FROM Sessions WHERE id_session = $1';
+        const sessionResult = await client.query(sessionQuery, [newSessionId]);
+        if (sessionResult.rows.length === 0) {
+            throw new Error('Session non trouvée.');
+        }
+        const sessionDate = new Date(sessionResult.rows[0].date);
+        const currentDate = new Date();
+        const diffTime = Math.abs(sessionDate - currentDate);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        
+        if (diffDays <= 3) {
+            throw new Error('Il n\'est pas possible de changer de session moins de 3 jours avant le début.');
+
         }
 
         // Mettre à jour l'inscription

@@ -31,3 +31,16 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MjEsImVtYWlsI
     "price": 10,
     "clientId": 21
 }
+
+
+### Création d'une intention de paiement pour une formation
+POST http://localhost:3000/stripe/create-payment-intent-formation
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NDMsImVtYWlsIjoiYmlsYWxlbGhhZGRhZGkucHJvQGdtYWlsLmNvbSIsInJvbGUiOiJBZG1pbiIsImlhdCI6MTcwODY4MDA4MCwiZXhwIjoxNzA4NjgzNjgwfQ.2GEm7YKa8PP9N50CFExE31ase5UyAiAu-pNR_jjzFhI
+
+{
+    "formationId": 8,
+    "clientId": 38,
+    "promoCode": "WELCOME10"
+
+}

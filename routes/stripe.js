@@ -7,6 +7,6 @@ const authenticateToken = require('../authenticateToken');
 router.post('/create-payment-intent-formation', authenticateToken, stripeController.createPaymentIntentForFormation);
 
 
-
+//router.post('/verify-code' , stripeController.verifyCode );
 
 module.exports = router;

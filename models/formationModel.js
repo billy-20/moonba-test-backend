@@ -4,11 +4,12 @@ class Formation {
   static async createFormation(nomFormation, description, niveau, prix, duree) {
     const query = 'INSERT INTO formations (nom_formation, description, niveau, prix, duree) VALUES ($1, $2, $3, $4, $5) RETURNING *';
     const values = [nomFormation, description, niveau, prix, duree];
-
+    
     try {
       const result = await pool.query(query, values);
       return result.rows[0];
     } catch (error) {
+      console.log(error);
       throw error;
     }
   }
@@ -33,6 +34,24 @@ class Formation {
     }
   }
   
+  static async getFormationDetail(id){
+
+    try {
+      const query = 'SELECT * FROM formations WHERE id_formations = $1';
+      const { rows } = await pool.query(query, [id]);
+      if (rows.length > 0) {
+          return rows[0];
+      } else {
+          throw new Error('Formation not found');
+      }
+  } catch (error) {
+      console.error('Error getting formation details:', error);
+      throw error;
+  }
+
+  }
+
+
 
   static async getAllFormationsWithSessions() {
     const query = `
@@ -93,10 +112,13 @@ class Formation {
 
 
   static async deleteFormation(id) {
+    const deleteSessionsQuery = 'DELETE FROM sessions WHERE id_formations = $1';
     const query = 'DELETE FROM formations WHERE id_formations = $1 RETURNING *';
     const values = [id];
   
     try {
+      await pool.query(deleteSessionsQuery, [id]);
+
       const result = await pool.query(query, values);
       return result.rows[0];
     } catch (error) {

@@ -9,10 +9,19 @@ const pool = require('../db'); // Assurez-vous que ceci correspond au chemin de 
 const sgMail = require('@sendgrid/mail');
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
+// service de SMS (double verification)
+
+
+
+
+ 
+
 exports.createPaymentIntentForFormation = async (req, res) => {
     try {
-        const { formationId, clientId } = req.body; // Récupération du clientId depuis la requête
+        const { formationId, clientId, promoCode } = req.body; // Récupération du clientId depuis la requête
 
+       
+        
 
         const checkInscriptionQuery = 'SELECT * FROM Inscriptions WHERE id_client = $1 AND id_formations = $2 AND statut_inscription = $3';
         const inscriptionCheckResult = await pool.query(checkInscriptionQuery, [clientId, formationId, 'Confirmé']);
@@ -23,6 +32,10 @@ exports.createPaymentIntentForFormation = async (req, res) => {
         
         // Optionnel : Récupérer le prix de la formation depuis la base de données si le prix n'est pas envoyé depuis le frontend
         let price;
+
+       
+
+
         if (req.body.price) {
             price = req.body.price;
         } else {
@@ -36,11 +49,30 @@ exports.createPaymentIntentForFormation = async (req, res) => {
             }
         }
 
+        let discountAmount = 0; // Montant de la réduction en centimes
+        if (promoCode) {
+            
+            const promoCodeValidation = await validatePromoCode(promoCode);
+            console.log(promoCode);
+            if (!promoCodeValidation.isValid) {
+                return res.status(400).send({ error: 'Code promo invalide ou expiré.' });
+            }
+            // Calculer le montant de la réduction basé sur le pourcentage
+            discountAmount = (price * promoCodeValidation.discount) / 100;
+            price -= discountAmount; // Appliquer la réduction
+            console.log(price);
+        }
+
         // Création de l'intention de paiement avec Stripe
         const paymentIntent = await stripe.paymentIntents.create({
             amount: price * 100, // Convertir le prix en centimes
             currency: "eur",
             payment_method_types: ["card"],
+            payment_method_options: {
+                card: {
+                    request_three_d_secure: 'any'
+                }
+            },
             // Ajoutez ici d'autres paramètres si nécessaire
         });
 
@@ -55,6 +87,24 @@ exports.createPaymentIntentForFormation = async (req, res) => {
         res.status(500).send({ error: 'Erreur lors de la création de l\'intention de paiement.' });
     }
 };
+
+
+async function validatePromoCode(promoCode) {
+    try {
+        const promoCodeQuery = 'SELECT discount FROM PromoCodes WHERE code = $1 AND is_active = true ';
+        const result = await pool.query(promoCodeQuery, [promoCode]);
+        if (result.rows.length > 0) {
+            return {
+                isValid: true,
+                discount: result.rows[0].discount // pourcentage de réduction
+            };
+        }
+        return { isValid: false };
+    } catch (error) {
+        console.error('Erreur lors de la validation du code promo:', error);
+        return { isValid: false };
+    }
+}
 
 async function handlePaymentConfirmation(clientId, formationId,price) {
     // Logique pour enregistrer l'inscription dans votre base de données
@@ -104,21 +154,37 @@ async function handlePaymentConfirmation(clientId, formationId,price) {
         // Envoi de l'email de confirmation
         await sendConfirmationEmail(clientEmail, formationId, price, clientId);
     } catch (error) {
+        console.log("client id = ",clientId);
         console.error('Erreur lors de l\'inscription ou de l\'envoi de l\'email:', error);
         // Gérer l'erreur comme vous le souhaitez
     }
 }
 
 async function getClientEmail(clientId) {
-    // Implémentez la logique pour récupérer l'email du client depuis la base de données
-    const queryEmail = 'SELECT email FROM Users WHERE id_user = $1';
-    const resultEmail = await pool.query(queryEmail, [clientId]);
-    if (resultEmail.rows.length > 0) {
-        return resultEmail.rows[0].email;
-    } else {
-        throw new Error('Client non trouvé.');
+    try {
+        // Premièrement, récupérer l'id_user correspondant au clientId de la table Clients
+        const queryUser = 'SELECT id_user FROM Clients WHERE id_client = $1';
+        const resultUser = await pool.query(queryUser, [clientId]);
+        if (resultUser.rows.length === 0) {
+            throw new Error('Client non trouvé.');
+        }
+        const userId = resultUser.rows[0].id_user;
+
+        // Deuxièmement, utiliser l'id_user pour récupérer l'email de la table Users
+        const queryEmail = 'SELECT email FROM Users WHERE id_user = $1';
+        const resultEmail = await pool.query(queryEmail, [userId]);
+        if (resultEmail.rows.length > 0) {
+            return resultEmail.rows[0].email;
+        } else {
+            throw new Error('Email non trouvé pour cet utilisateur.');
+        }
+    } catch (error) {
+        console.error('Erreur lors de la récupération de l\'email du client:', error);
+        throw error;
     }
 }
+
+
 
 async function getClientInfo(clientId) {
     // D'abord, récupérer le type du client

@@ -12,4 +12,11 @@ router.put('/inscriptions/changeSession', sessionController.changeSession);
 
 router.post('/assignerSession' , auth.checkAdmin ,sessionController.assignerSession);
 
+router.put('/addNombrePlaces/:sessionId' , auth.checkAdmin ,sessionController.addNombrePlaces);
+
+
+router.get('/listeInscrits/:sessionId' ,sessionController.getInscriptionsParSession);
+
+router.get('/getallSessions' ,sessionController.getAllSessionsWithInscription);
+
 module.exports = router;

@@ -23,6 +23,21 @@ const getAllWithoutSessions = async (req, res) => {
   }
 };
 
+const getFormationDetails = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const formation = await Formation.getFormationDetail(id);
+    console.log("formation detail id :  ", id);
+    res.status(200).json(formation);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Une erreur est survenue lors de la récupération de la formation.' });
+  }
+};
+
+
+
+
 const deleteFormation = async (req, res) => {
   const { id } = req.params;
   try {
@@ -56,11 +71,12 @@ const updateFormation = async(req, res)=>{
 const createFormation = async(req, res)=>{
 
   const { nomFormation, description, niveau, prix, duree } = req.body;
-
   try {
       const newFormation = await Formation.createFormation( nomFormation, description, niveau, prix, duree);
+      console.log("add formation OK");
       res.json(newFormation);
   } catch (error) {
+    console.log(error);
       res.status(400).json({ message: error.message });
   }
 
@@ -89,5 +105,6 @@ module.exports = {
   deleteFormation,
   updateFormation,
   createFormation,
-  getAllWithoutSessions
+  getAllWithoutSessions,
+  getFormationDetails
 };
