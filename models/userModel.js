@@ -213,7 +213,7 @@ class User {
   //on desactive ici pour pas gaspiller autant d'envoi de mails pour les tests
 
   static async sendWelcomeEmail(email, token) {
-    const verificationUrl = `http://localhost:3000/clients/verify?token=${token}`; 
+    const verificationUrl = `https://test-backend-gluw.onrender.com/clients/verify?token=${token}`; 
     const msg = {
       to: email,
       from: 'formations@moonba-studio.com',

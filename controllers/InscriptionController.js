@@ -66,6 +66,7 @@ d'abord aller chercher l'user dans la table unverified_users puis insert dans us
 
 */
 verify: async (req, res) => {
+  console.log("verify status here");
   const { token } = req.query;
   const client = await pool.connect();
 
@@ -97,6 +98,8 @@ verify: async (req, res) => {
       await client.query(deleteUserQuery, [token]);
 
       await client.query('COMMIT');
+      console.log("verify status OK");
+
       res.status(200).json({ message: 'Votre compte a été vérifié avec succès.' });
     } else {
       await client.query('ROLLBACK');
