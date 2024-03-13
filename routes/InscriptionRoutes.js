@@ -22,7 +22,6 @@ router.get('/verify', inscriptionController.verify);
 
 router.get('/formations/:formationId/inscriptions',auth.checkAdmin, inscriptionController.getInscriptionsByFormation);
 
-// Dans votre fichier de routes
 
 router.post('/changerSession', inscriptionController.changerSession);
 

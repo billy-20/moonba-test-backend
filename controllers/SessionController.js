@@ -1,13 +1,13 @@
 // sessionController.js
 
-const Session = require('../models/sessionModel'); // Assurez-vous que le chemin d'accès est correct
+const Session = require('../models/sessionModel'); 
 const express = require('express');
 const router = express.Router();
 const PDFDocument = require('pdfkit');
 
 const sessionController = {
     getSessionsDisponibles: async (req, res) => {
-        const { formationId } = req.params; // Assurez-vous que l'ID de la formation est passé en paramètre dans la route
+        const { formationId } = req.params; 
         try {
             const sessions = await Session.getSessionsDisponibles(formationId);
             if (sessions.length > 0) {
@@ -39,7 +39,6 @@ const sessionController = {
         try {
             const inscrits = await Session.getInscritsParSession(sessionId);
             res.json(inscrits);
-            // Création d'un nouveau document PDF
         
         } catch (error) {
             console.error(error);

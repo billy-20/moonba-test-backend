@@ -2,10 +2,10 @@ const User = require('../models/userModel');
 
 class UserController {
   static async registerUser(req, res) {
-    const { email, adresse, type,numero_telephone, nom, prenom, nom_entreprise, numero_tva, password, verificationToken} = req.body;
+    const { email, adresse, type,numero_telephone, nom, prenom, nom_entreprise, numero_tva, password, numero_entreprise, adresse_facturation, verificationToken} = req.body;
 
     try {
-      const newUser = await User.createUser(email, adresse, type,numero_telephone, nom, prenom, nom_entreprise, numero_tva, password, verificationToken);
+      const newUser = await User.createUser(email, adresse, type,numero_telephone, nom, prenom, nom_entreprise, numero_tva, password,numero_entreprise,adresse_facturation, verificationToken);
       res.json(newUser);
     } catch (error) {
       console.error(error);
@@ -31,7 +31,6 @@ class UserController {
     const {  email, newPassword, adresse, type, numero_telephone, nom, prenom, nom_entreprise, numero_tva } = req.body;
     
     try {
-        // Appel de la méthode static pour mettre à jour les informations du client et de l'utilisateur
         const result = await User.updateClientInfo(id_client, email, newPassword, adresse, type, numero_telephone, nom, prenom, nom_entreprise, numero_tva);
         
         if (result.success) {

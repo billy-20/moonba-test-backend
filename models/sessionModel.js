@@ -115,7 +115,7 @@ static async assignerSessionAUneFormation(formationId, dateSession, nombrePlaces
 
         await client.query('COMMIT');
         console.log("Session assignée avec succès à la formation.");
-        return result.rows[0]; // Retourner les détails de la session créée
+        return result.rows[0]; 
     } catch (error) {
         await client.query('ROLLBACK');
         console.error("Erreur lors de l'assignation de la session à la formation: ", error.message);
@@ -130,7 +130,6 @@ static async changeSession(inscriptionId, newSessionId) {
     try {
         await client.query('BEGIN');
 
-        // Vérifier si le changement de session est autorisé
         const { rows } = await client.query('SELECT a_change_de_session, id_session, nb_changes FROM Inscriptions WHERE id_inscription = $1', [inscriptionId]);
         if (rows.length === 0) {
             throw new Error('Inscription non trouvée.');
@@ -158,10 +157,8 @@ static async changeSession(inscriptionId, newSessionId) {
 
         }
 
-        // Mettre à jour l'inscription
         await client.query('UPDATE Inscriptions SET id_session = $1, a_change_de_session = true, nb_changes = nb_changes + 1 WHERE id_inscription = $2', [newSessionId, inscriptionId]);
 
-        // Ajuster les nombres de places
         await client.query('UPDATE Sessions SET nombre_places = nombre_places + 1 WHERE id_session = $1', [id_session]);
         await client.query('UPDATE Sessions SET nombre_places = nombre_places - 1 WHERE id_session = $1', [newSessionId]);
 

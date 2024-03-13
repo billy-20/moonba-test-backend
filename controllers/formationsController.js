@@ -83,7 +83,6 @@ const createFormation = async(req, res)=>{
 
 }
 
-// Récupérer une formation par ID
 const getById = async (req, res) => {
   const { id } = req.params;
   try {

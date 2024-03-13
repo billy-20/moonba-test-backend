@@ -26,8 +26,7 @@ class Formation {
   
     try {
         const result = await pool.query(query);
-        // Si vous souhaitez renvoyer uniquement les formations sans les sessions, 
-        // puisque par définition ces formations n'ont pas de sessions.
+        
         return result.rows;
     } catch (error) {
         throw error;
@@ -68,14 +67,12 @@ class Formation {
         let currentFormationId = null;
         let currentFormation = null;
 
-        // Itérer sur chaque ligne de résultat pour construire un tableau de formations
-        // avec un tableau de sessions pour chaque formation
+     
         result.rows.forEach(row => {
             if (row.id_formations !== currentFormationId) {
                 if (currentFormation) {
-                    formations.push(currentFormation); // Ajouter la formation précédente au tableau
+                    formations.push(currentFormation); 
                 }
-                // Commencer une nouvelle formation
                 currentFormationId = row.id_formations;
                 currentFormation = {
                     id_formations: row.id_formations,
@@ -88,7 +85,6 @@ class Formation {
                 };
             }
 
-            // Ajouter la session à la formation courante, si elle existe
             if (row.session_id) {
                 currentFormation.sessions.push({
                     id: row.session_id,
@@ -98,7 +94,7 @@ class Formation {
             }
         });
 
-        // Ne pas oublier d'ajouter la dernière formation traitée au tableau
+        
         if (currentFormation) {
             formations.push(currentFormation);
         }

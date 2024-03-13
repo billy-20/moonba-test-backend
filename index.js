@@ -13,11 +13,10 @@ const promoRoutes = require('./routes/codePromoRoutes');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware pour parser le JSON
 app.use(bodyParser.json());
 app.use(cors());
 
-// Utilisation des routes
+// ROUTES
 app.use('/users', userRoutes);
 app.use('/stripe', stripeRoutes);
 app.use('/formation', formationRoutes);
@@ -26,7 +25,7 @@ app.use('/sessions' , sessionsRoutes);
 app.use('/promoCode' , promoRoutes);
 
 
-// Démarrage du serveur
+// DEMARRAGE DU SERVEUR ICI
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });

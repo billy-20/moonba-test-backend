@@ -18,19 +18,14 @@ sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
 exports.createPaymentIntentForFormation = async (req, res) => {
     try {
-        const { formationId, clientId, promoCode } = req.body; // Récupération du clientId depuis la requête
-
-       
-        
+        const { formationId, clientId, promoCode } = req.body; 
 
         const checkInscriptionQuery = 'SELECT * FROM Inscriptions WHERE id_client = $1 AND id_formations = $2 AND statut_inscription = $3';
         const inscriptionCheckResult = await pool.query(checkInscriptionQuery, [clientId, formationId, 'Confirmé']);
         if (inscriptionCheckResult.rows.length > 0) {
-            // Inscription déjà confirmée pour cette formation
             return res.status(400).send({ error: 'Vous avez déjà payé cette formation.' });
         }
         
-        // Optionnel : Récupérer le prix de la formation depuis la base de données si le prix n'est pas envoyé depuis le frontend
         let price;
 
        
@@ -39,17 +34,16 @@ exports.createPaymentIntentForFormation = async (req, res) => {
         if (req.body.price) {
             price = req.body.price;
         } else {
-            // Supposons que votre table de formations a une colonne 'prix'
             const formationQuery = 'SELECT prix FROM formations WHERE id_formations = $1';
             const formationResult = await pool.query(formationQuery, [formationId]);
             if (formationResult.rows.length > 0) {
-                price = formationResult.rows[0].prix; // Utiliser le prix depuis la base de données
+                price = formationResult.rows[0].prix; 
             } else {
                 return res.status(404).send({ error: 'Formation non trouvée.' });
             }
         }
 
-        let discountAmount = 0; // Montant de la réduction en centimes
+        let discountAmount = 0; 
         if (promoCode) {
             
             const promoCodeValidation = await validatePromoCode(promoCode);
@@ -57,13 +51,11 @@ exports.createPaymentIntentForFormation = async (req, res) => {
             if (!promoCodeValidation.isValid) {
                 return res.status(400).send({ error: 'Code promo invalide ou expiré.' });
             }
-            // Calculer le montant de la réduction basé sur le pourcentage
             discountAmount = (price * promoCodeValidation.discount) / 100;
-            price -= discountAmount; // Appliquer la réduction
+            price -= discountAmount; 
             console.log(price);
         }
 
-        // Création de l'intention de paiement avec Stripe
         const paymentIntent = await stripe.paymentIntents.create({
             amount: price * 100, // Convertir le prix en centimes
             currency: "eur",
@@ -73,11 +65,9 @@ exports.createPaymentIntentForFormation = async (req, res) => {
                     request_three_d_secure: 'any'
                 }
             },
-            // Ajoutez ici d'autres paramètres si nécessaire
         });
 
-        // Ici, vous pouvez appeler une fonction pour enregistrer le paiement dans votre base de données
-        // et potentiellement envoyer un email de confirmation
+       
         await handlePaymentConfirmation(clientId, formationId,price);
 
         res.status(200).send({ clientSecret: paymentIntent.client_secret });
@@ -107,8 +97,7 @@ async function validatePromoCode(promoCode) {
 }
 
 async function handlePaymentConfirmation(clientId, formationId,price) {
-    // Logique pour enregistrer l'inscription dans votre base de données
-    // et envoyer un email de confirmation via SendGrid
+    
    
     const sessionQuery = 'SELECT id_session FROM Sessions WHERE id_formations = $1 AND nombre_places > 0 LIMIT 1';
     let sessionId;
@@ -118,11 +107,11 @@ async function handlePaymentConfirmation(clientId, formationId,price) {
             sessionId = sessionResult.rows[0].id_session;
         } else {
             console.error('Aucune session disponible pour cette formation.');
-            return; // Stopper l'exécution si aucune session disponible
+            return; 
         }
     } catch (error) {
         console.error('Erreur lors de la récupération d\'une session disponible:', error);
-        return; // Gérer l'erreur comme approprié
+        return; 
     }
     const inscriptionDate = new Date().toISOString();
     const statutPaiement = 'Payé';
@@ -145,24 +134,19 @@ async function handlePaymentConfirmation(clientId, formationId,price) {
             console.log(`Nombre de places mis à jour pour la formation ${formationId}. Places restantes: ${updatedPlaces}`);
         } else {
             console.log('Erreur ou aucune place restante pour décrémenter');
-            // Vous pourriez vouloir gérer ce cas spécifiquement, par exemple, en annulant l'inscription ou en informant l'utilisateur.
         }
 
-        // Supposons que vous ayez une fonction pour récupérer l'email du client
-        const clientEmail = await getClientEmail(clientId); // Vous devez implémenter cette fonction
+        const clientEmail = await getClientEmail(clientId); 
 
-        // Envoi de l'email de confirmation
         await sendConfirmationEmail(clientEmail, formationId, price, clientId);
     } catch (error) {
         console.log("client id = ",clientId);
         console.error('Erreur lors de l\'inscription ou de l\'envoi de l\'email:', error);
-        // Gérer l'erreur comme vous le souhaitez
     }
 }
 
 async function getClientEmail(clientId) {
     try {
-        // Premièrement, récupérer l'id_user correspondant au clientId de la table Clients
         const queryUser = 'SELECT id_user FROM Clients WHERE id_client = $1';
         const resultUser = await pool.query(queryUser, [clientId]);
         if (resultUser.rows.length === 0) {
@@ -170,7 +154,6 @@ async function getClientEmail(clientId) {
         }
         const userId = resultUser.rows[0].id_user;
 
-        // Deuxièmement, utiliser l'id_user pour récupérer l'email de la table Users
         const queryEmail = 'SELECT email FROM Users WHERE id_user = $1';
         const resultEmail = await pool.query(queryEmail, [userId]);
         if (resultEmail.rows.length > 0) {
@@ -187,21 +170,18 @@ async function getClientEmail(clientId) {
 
 
 async function getClientInfo(clientId) {
-    // D'abord, récupérer le type du client
     const clientTypeQuery = 'SELECT type FROM clients WHERE id_client = $1';
     const clientTypeResult = await pool.query(clientTypeQuery, [clientId]);
     if (clientTypeResult.rows.length > 0) {
         const { type } = clientTypeResult.rows[0];
         
-        // Si le client est une entreprise
         if (type === 'Entreprise') {
             const queryEntreprise = 'SELECT nom_entreprise FROM entreprise WHERE id_client = $1';
             const result = await pool.query(queryEntreprise, [clientId]);
             if (result.rows.length > 0) {
-                return { type: 'Entreprise', nom: result.rows[0].nom_entreprise };
+                return { type: 'Entreprise', nom: result.rows[0].nom_entreprise , adresse_facturation : result.rows[0].adresse_facturation , numero_entreprise : result.rows[0].adresse_facturation };
             }
         }
-        // Si le client est un particulier
         else if (type === 'Particulier') {
             const queryParticulier = 'SELECT nom, prenom FROM particulier WHERE id_client = $1';
             const result = await pool.query(queryParticulier, [clientId]);
@@ -216,7 +196,6 @@ async function getClientInfo(clientId) {
 
 async function sendConfirmationEmail(email, formationId, price, clientId) {
     let nameFormation;
-    // Récupération du nom de la formation comme précédemment
     const formationQuery = 'SELECT nom_formation FROM formations WHERE id_formations = $1';
     try {
         const formationResult = await pool.query(formationQuery, [formationId]);
@@ -230,7 +209,6 @@ async function sendConfirmationEmail(email, formationId, price, clientId) {
         return;
     }
 
-    // recuperation des info du client afin de les mettre dans la facture : 
 
     let clientInfo;
     try {
@@ -240,7 +218,6 @@ async function sendConfirmationEmail(email, formationId, price, clientId) {
         return;
     }
 
-    // Continuer avec la création du PDF
     const pdfDoc = await PDFDocument.create();
     const page = pdfDoc.addPage();
     const fontSize = 12;
@@ -253,7 +230,18 @@ async function sendConfirmationEmail(email, formationId, price, clientId) {
         size: fontSize,
         color: rgb(0, 0, 0),
     });
-    
+    page.drawText(`adresse de facturation : ${clientInfo.adresse_facturation}`, {
+        x: textWidth,
+        y: initialHeight,
+        size: fontSize,
+        color: rgb(0, 0, 0),
+    });
+    page.drawText(`numero entreprise du client : ${clientInfo.numero_entreprise}`, {
+        x: textWidth,
+        y: initialHeight,
+        size: fontSize,
+        color: rgb(0, 0, 0),
+    });
     page.drawText(`Prix: ${price}€`, {
         x: textWidth,
         y: initialHeight - 2 * fontSize,
@@ -261,7 +249,6 @@ async function sendConfirmationEmail(email, formationId, price, clientId) {
         color: rgb(0, 0, 0),
     });
 
-    // Ajouter les informations du client
     if (clientInfo.type === 'Entreprise') {
         page.drawText(`Entreprise: ${clientInfo.nom}`, {
             x: textWidth,
@@ -282,10 +269,9 @@ async function sendConfirmationEmail(email, formationId, price, clientId) {
     const pdfBase64 = Buffer.from(pdfBytes).toString('base64');
 
 
-    // Configuration de l'email avec pièce jointe PDF
     const msg = {
         to: email,
-        from: 'formations@moonba-studio.com', // Votre adresse email SendGrid
+        from: 'formations@moonba-studio.com', // email de sendgrid
         subject: 'Confirmation de votre inscription à la formation',
         text: `Votre paiement a été accepté et vous êtes maintenant inscrit à la formation. Nom de la formation: ${nameFormation}`,
         html: `<strong>Votre paiement a été accepté et vous êtes maintenant inscrit à la formation.</strong> Nom de la formation: ${nameFormation}`,
@@ -299,7 +285,7 @@ async function sendConfirmationEmail(email, formationId, price, clientId) {
         ],
     };
 
-    // Envoi de l'email
+    // send email here
     try {
         await sgMail.send(msg);
         console.log('Email de confirmation envoyé avec succès');

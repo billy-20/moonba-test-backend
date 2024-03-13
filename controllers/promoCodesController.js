@@ -15,7 +15,6 @@ class PromoCodesController {
         }
       }
 
-      // Ajoutez ces méthodes dans la classe PromoCodesController dans votre fichier controllers/promoCodesController.js
 
 static async getAllCodes(req, res) {
     try {
@@ -43,7 +42,7 @@ static async getAllCodes(req, res) {
   
   static async updateCode(req, res) {
     const { idCode } = req.params;
-    const fields = req.body; // Assume this contains any of the fields: discount, start_date, end_date, is_active
+    const fields = req.body; 
     try {
       const updatedCode = await PromoCode.updatePromoCode(idCode, fields);
       if (!updatedCode) {

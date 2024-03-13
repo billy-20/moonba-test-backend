@@ -15,7 +15,6 @@ class PromoCode {
         }
       }
 
-      // Ajoutez ces méthodes dans la classe PromoCode dans votre fichier models/codesPromoModel.js
 
 static async getAllPromoCodes() {
     const query = 'SELECT * FROM PromoCodes';

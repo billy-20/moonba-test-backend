@@ -1,11 +1,8 @@
 // InscriptionModel.js
 
-// Import des dépendances
 const pool = require('../db');
 
-// Définition du modèle pour la gestion des inscriptions aux formations
 class Inscription {
-    // Méthode statique pour récupérer les inscriptions d'un client
     static async getInscriptionsByClient(clientId) {
         try {
             const query = 'SELECT * FROM Inscriptions WHERE id_client = $1 AND statut_paiement = \'Payé\' AND statut_inscription=\'Confirmé\'';
@@ -16,21 +13,17 @@ class Inscription {
         }
     }
     static async annulerInscription(inscriptionId) {
-        // Commence par récupérer l'id_session avant de supprimer l'inscription
         const getSessionQuery = 'SELECT id_session FROM Inscriptions WHERE id_inscription = $1';
         const deleteQuery = 'DELETE FROM Inscriptions WHERE id_inscription = $1 RETURNING *';
         const values = [inscriptionId];
     
         try {
-            // Récupérer l'id_session de l'inscription
             const sessionResult = await pool.query(getSessionQuery, values);
             if (sessionResult.rows.length > 0) {
                 const sessionId = sessionResult.rows[0].id_session;
     
-                // Procéder à la suppression de l'inscription
                 const deleteResult = await pool.query(deleteQuery, values);
                 if (deleteResult.rows.length > 0) {
-                    // Mise à jour réussie, augmenter le nombre de places de la session
                     await this.augmenterNombrePlaces(sessionId);
     
                     return deleteResult.rows[0];
@@ -44,7 +37,6 @@ class Inscription {
             throw error;
         }
     }
-    // Méthode pour augmenter le nombre de places d'une session
 static async augmenterNombrePlaces(sessionId) {
     const query = 'UPDATE Sessions SET nombre_places = nombre_places + 1 WHERE id_session = $1 RETURNING *';
     try {
@@ -67,17 +59,14 @@ static async augmenterNombrePlaces(sessionId) {
         try {
           const result = await pool.query(query, [clientId, formationId]);
           if (result.rows.length > 0) {
-            // Retourner le statut de l'inscription si trouvé
             return result.rows[0].statut_inscription;
           } else {
-            // Aucune inscription trouvée pour cette combinaison client/formation
             return null;
           }
         } catch (error) {
           throw error;
         }
       }
-      // Dans InscriptionModel.js
 
 static async changerSessionInscription(inscriptionId, nouvelleSessionId) {
   const query = `
@@ -98,9 +87,7 @@ static async changerSessionInscription(inscriptionId, nouvelleSessionId) {
   }
 }
 
-// Dans InscriptionModel.js
 
-// Méthode pour récupérer les inscriptions par formation
 static async getInscriptionsByFormation(formationId) {
   try {
       const query = `
@@ -135,9 +122,8 @@ static async getInscriptionsByFormation(formationId) {
           statut_inscription: row.statut_inscription,
           adresse: row.adresse,
           type: row.type,
-          email: row.email, // Inclure l'email dans les résultats
+          email: row.email, 
       };
-          // Structurer les données selon que le client est un Particulier ou une Entreprise
           if (row.type === 'Particulier') {
               return {
                   ...clientData,
@@ -164,5 +150,4 @@ static async getInscriptionsByFormation(formationId) {
       
 }
 
-// Export du modèle Inscription
 module.exports = Inscription;

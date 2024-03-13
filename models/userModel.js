@@ -10,14 +10,14 @@ const { v4: uuidv4 } = require('uuid'); // Pour générer des UUID uniques
 
 class User {
 
-  static async createUser(email, adresse, type, numero_telephone, nom, prenom, nom_entreprise, numero_tva, password , numero_entreprise) {
+  static async createUser(email, adresse, type, numero_telephone, nom, prenom, nom_entreprise, numero_tva, password , numero_entreprise, adresse_facturation) {
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
     const verificationToken = uuidv4();
 
     // Insertion dans la table Unverified_Users
-    const query = 'INSERT INTO Unverified_Users (email, password, role, verification_token, adresse, type, numero_telephone, nom, prenom, nom_entreprise, numero_tva, numero_entreprise) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING id_user';
-    const values = [email, hashedPassword, 'Client', verificationToken, adresse, type, numero_telephone, nom, prenom, nom_entreprise, numero_tva , numero_entreprise];
+    const query = 'INSERT INTO Unverified_Users (email, password, role, verification_token, adresse, type, numero_telephone, nom, prenom, nom_entreprise, numero_tva, numero_entreprise, adresse_facturation) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12 , $13) RETURNING id_user';
+    const values = [email, hashedPassword, 'Client', verificationToken, adresse, type, numero_telephone, nom, prenom, nom_entreprise, numero_tva , numero_entreprise , adresse_facturation];
     try {
       await pool.query(query, values);
       await User.sendWelcomeEmail(email, verificationToken);
@@ -35,7 +35,7 @@ class User {
         const { is_verified } = result.rows[0];
         return is_verified;
       } else {
-        return false; // Si aucun utilisateur correspondant au token n'est trouvé
+        return false; 
       }
     } catch (error) {
       console.error('Error checking verification status:', error);
@@ -45,31 +45,46 @@ class User {
 
   static async getClientInfo(id_client) {
     try {
-        // D'abord, récupérer les informations de la table Clients
         const clientQuery = 'SELECT * FROM Clients WHERE id_client = $1';
         const clientResult = await pool.query(clientQuery, [id_client]);
         if (clientResult.rows.length === 0) {
             throw new Error('Client not found');
         }
         const clientInfo = clientResult.rows[0];
-        
-        // Ensuite, récupérer les informations correspondantes de la table Users
+
         const userQuery = 'SELECT email, role FROM Users WHERE id_user = $1';
         const userResult = await pool.query(userQuery, [clientInfo.id_user]);
         if (userResult.rows.length === 0) {
             throw new Error('User not found');
         }
         const userInfo = userResult.rows[0];
-        
-        // Combiner les informations du client et de l'utilisateur
-        return {
+
+        let returnInfo = {
             id_client: id_client,
             email: userInfo.email,
             role: userInfo.role,
             adresse: clientInfo.adresse,
             type: clientInfo.type,
-            // Ajoutez ici d'autres champs si nécessaire
         };
+
+        if (clientInfo.type === 'Entreprise') {
+            const entrepriseQuery = 'SELECT * FROM Entreprise WHERE id_client = $1';
+            const entrepriseResult = await pool.query(entrepriseQuery, [id_client]);
+            if (entrepriseResult.rows.length > 0) {
+                const entrepriseInfo = entrepriseResult.rows[0];
+                returnInfo = { ...returnInfo, nom_entreprise: entrepriseInfo.nom, numero_entreprise: entrepriseInfo.numero };
+            }
+        }
+        else if (clientInfo.type === 'Particulier') {
+            const particulierQuery = 'SELECT * FROM Particulier WHERE id_client = $1';
+            const particulierResult = await pool.query(particulierQuery, [id_client]);
+            if (particulierResult.rows.length > 0) {
+                const particulierInfo = particulierResult.rows[0];
+                returnInfo = { ...returnInfo, nom: particulierInfo.nom, prenom: particulierInfo.prenom };
+            }
+        }
+
+        return returnInfo;
     } catch (error) {
         console.error('Error getting client info:', error);
         throw error;
@@ -77,12 +92,11 @@ class User {
 }
 
 
+
   static async updateClientInfo(id_client, email, newPassword, adresse, type, numero_telephone, nom, prenom, nom_entreprise, numero_tva) {
     try {
-        // Début de la transaction
         await pool.query('BEGIN');
 
-        // Mise à jour conditionnelle dans Users
         if (email || newPassword) {
             let userUpdateParts = [];
             let userValues = [];
@@ -122,8 +136,6 @@ class User {
             clientCounter++;
         }
 
-        // Répétez le processus pour chaque champ...
-        // Exemple pour 'type'
 
         if (type) {
             clientUpdateParts.push(`type = $${clientCounter}`);
@@ -131,7 +143,6 @@ class User {
             clientCounter++;
         }
 
-        // Ajoutez d'autres champs ici...
 
         if (clientUpdateParts.length > 0) {
             clientValues.push(id_client);
@@ -143,12 +154,10 @@ class User {
             await pool.query(updateClientQuery, clientValues);
         }
 
-        // Validation de la transaction
         await pool.query('COMMIT');
 
         return { success: true, message: 'Client and User info updated successfully.' };
     } catch (error) {
-        // Annulation de la transaction en cas d'erreur
         await pool.query('ROLLBACK');
         console.error('Error during client and user info update:', error);
         throw error;
@@ -179,7 +188,6 @@ class User {
   }
 
   static async authenticate(email, password) {
-    // Ajuster la requête pour sélectionner les utilisateurs depuis la table Users
     const query = 'SELECT id_user, email, password, role FROM Users WHERE email = $1';
     const values = [email];
 
@@ -189,7 +197,6 @@ class User {
         const user = result.rows[0];
 
         if (await bcrypt.compare(password, user.password)) {
-          // Retourne les informations de l'utilisateur si le mot de passe est correct
           return { id: user.id_user, email: user.email, role: user.role };
         } else {
           throw new Error('Invalid credentials');
@@ -206,7 +213,7 @@ class User {
   //on desactive ici pour pas gaspiller autant d'envoi de mails pour les tests
 
   static async sendWelcomeEmail(email, token) {
-    const verificationUrl = `http://localhost:3000/clients/verify?token=${token}`; // Ajustez l'URL selon votre route de vérification
+    const verificationUrl = `http://localhost:3000/clients/verify?token=${token}`; 
     const msg = {
       to: email,
       from: 'formations@moonba-studio.com',

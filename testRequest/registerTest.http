@@ -55,13 +55,15 @@ POST http://localhost:3000/users/register
 Content-Type: application/json
 
 {
-  "email": "bilal.el.haddadi227@gmail.com",
+  "email": "karimrudi9@gmail.com",
   "adresse": "456 Avenue des Entreprises",
   "type": "Entreprise",
   "numero_telephone":123456789,
   "nom_entreprise": "TechCorp",
   "numero_tva": "FR123456789",
-  "password": "aze"
+  "password": "aze",
+  "numero_entreprise":"123123",
+  "adresse_facturation":"adresse facturation 12"
 }
 
 ### Test de la route de vérification de l'utilisateur
