@@ -17,8 +17,6 @@ const validate = (req, res, next) => {
 router.post('/register', [
     body('email').isEmail().withMessage('Entrez une adresse email valide')
       .normalizeEmail(),
-    body('password').isLength({ min: 2 }).withMessage('Le mot de passe doit contenir au moins 2 caractères')
-      .matches(/^[a-zA-Z0-9!@#$%^&*]{8,}$/).withMessage('Mot de passe contient des caractères non autorisés'),
     body('nom').trim().escape().not().isEmpty().withMessage('Nom requis'),
     body('prenom').trim().escape().not().isEmpty().withMessage('Prénom requis'),
     body('adresse').trim().escape().optional(),
