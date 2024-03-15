@@ -29,33 +29,36 @@ Content-Type: application/json
   "password": "aze"
 }
 
+//https://test-backend-gluw.onrender.com/users/register
 ###
-POST http://localhost:3000/users/register
+POST https://test-backend-gluw.onrender.com/users/register
 Content-Type: application/json
 
 {
-  "email": "bilalelhaddadi.pro@gmail.com",
+  "email": "bilal.elhaddadi@student.vinci.be",
   "adresse": "123 Rue Exemple",
   "type": "Entreprise",
   "numero_telephone": "0123456789",
   "nom": "Doe",
   "prenom": "John",
-  "password": "aze"
+  "password": "123123aze"
 }
 
-###verif status de user 
-GET http://localhost:3000/users/verifStatus?verificationToken=d62e8836-e0a4-4b97-b54f-55d77148995d
 
+
+###verif status de user 
+GET https://test-backend-gluw.onrender.com/clients/verify?token=7122c582-5a49-4876-a4ca-981e2b2ece1a
+//http://localhost:3000/clients/verify?token=${token}
 ###
 GET http://localhost:3000/clients/verify?token=6ce5274d-22a0-415d-a5df-c6db2d6b9a82
 
 
 ### Test de l'inscription d'un utilisateur entreprise
-POST http://localhost:3000/users/register
+POST https://test-backend-gluw.onrender.com/users/register
 Content-Type: application/json
 
 {
-  "email": "karimrudi9@gmail.com",
+  "email": "bilal.elhaddadi@student.vinci.be",
   "adresse": "456 Avenue des Entreprises",
   "type": "Entreprise",
   "numero_telephone":123456789,
@@ -74,7 +77,7 @@ POST https://test-backend-gluw.onrender.com/users/register
 Content-Type: application/json
 
 {
-  "email": "test@example.com",
+  "email": "bilal.elhaddadi@student.vinci.be",
   "adresse": "456 Avenue des Entreprises",
   "type": "Entreprise",
   "nom_entreprise": "test",

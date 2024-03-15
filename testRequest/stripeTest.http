@@ -44,3 +44,11 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NDMsImVtYWlsI
     "promoCode": "WELCOME10"
 
 }
+
+###
+POST http://localhost:3000/stripe/create-paypal-payment
+Content-Type: application/json
+
+{
+    "price": "11.00"
+}

@@ -1,6 +1,7 @@
 
 
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const paypal = require('@paypal/checkout-server-sdk');
 
 const { PDFDocument, rgb } = require('pdf-lib');
 const fs = require('fs');
@@ -13,8 +14,73 @@ sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
 
 
+function environment() {
+    let clientId = process.env.PAYPAL_CLIENT_ID;
+    let clientSecret = process.env.PAYPAL_CLIENT_SECRET;
 
- 
+    return new paypal.core.SandboxEnvironment(clientId, clientSecret);
+}
+
+function paypalClient() {
+    return new paypal.core.PayPalHttpClient(environment());
+}
+
+exports.createPayPalPayment = async (req, res) => {
+    try {
+        const { formationId, clientId, promoCode } = req.body;
+
+        // Vérifier si l'inscription existe déjà
+        const inscriptionCheckResult = await pool.query(
+            'SELECT * FROM Inscriptions WHERE id_client = $1 AND id_formations = $2 AND statut_inscription = $3',
+            [clientId, formationId, 'Confirmé']
+        );
+        if (inscriptionCheckResult.rows.length > 0) {
+            return res.status(400).send({ error: 'Vous avez déjà payé cette formation.' });
+        }
+
+        // Calculer le prix avec éventuellement un code promo
+        let price;
+        const formationResult = await pool.query('SELECT prix FROM formations WHERE id_formations = $1', [formationId]);
+        if (formationResult.rows.length > 0) {
+            price = formationResult.rows[0].prix;
+        } else {
+            return res.status(404).send({ error: 'Formation non trouvée.' });
+        }
+
+        if (promoCode) {
+            const promoCodeValidation = await validatePromoCode(promoCode);
+            if (!promoCodeValidation.isValid) {
+                return res.status(400).send({ error: 'Code promo invalide ou expiré.' });
+            }
+            let discountAmount = (price * promoCodeValidation.discount) / 100;
+            price -= discountAmount;
+        }
+
+        // Créer la transaction PayPal
+        const request = new paypal.orders.OrdersCreateRequest();
+        request.prefer("return=representation");
+        request.requestBody({
+            intent: 'CAPTURE',
+            purchase_units: [{
+                amount: {
+                    currency_code: 'EUR',
+                    value: price.toString() // Convertir le prix final en chaîne de caractères
+                }
+            }]
+        });
+
+        const order = await paypalClient().execute(request);
+        // Enregistrer la transaction ou des détails supplémentaires ici si nécessaire
+        await handlePaymentConfirmation(clientId, formationId, price); // Assurez-vous que cette fonction gère correctement PayPal
+
+        res.json({ id: order.result.id });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Erreur lors de la création de l\'intention de paiement PayPal.');
+    }
+};
+
+
 
 exports.createPaymentIntentForFormation = async (req, res) => {
     try {
@@ -27,9 +93,6 @@ exports.createPaymentIntentForFormation = async (req, res) => {
         }
         
         let price;
-
-       
-
 
         if (req.body.price) {
             price = req.body.price;
