@@ -27,6 +27,7 @@ class User {
       throw error;
     }
   }
+  
   static async checkVerificationStatus(verificationToken) {
     const query = 'SELECT is_verified FROM Users WHERE verification_token = $1';
     try {
@@ -213,22 +214,30 @@ class User {
   //on desactive ici pour pas gaspiller autant d'envoi de mails pour les tests
 
   static async sendWelcomeEmail(email, token) {
-    const verificationUrl = `https://test-backend-gluw.onrender.com/clients/verify?token=${token}`; 
+    const verificationUrl = `https://test-backend-gluw.onrender.com/clients/verify?token=${token}`;
     const msg = {
       to: email,
       from: 'formations@moonba-studio.com',
-      subject: 'Veuillez vérifier votre adresse email',
-      html: `Veuillez cliquer sur le lien suivant pour vérifier votre compte : <a href="${verificationUrl}">${verificationUrl}</a>`,
+      subject: 'Bienvenue sur notre site web Moonba Studio!',
+      html: `
+        <div style="font-family: sans-serif; color: #333;">
+          <h1 style="color: #0066CC;">Bienvenue sur notre site web Moonba Studio!</h1>
+          <p>Nous sommes ravis de vous avoir parmi nous. Pour activer votre compte, veuillez cliquer sur le bouton ci-dessous.</p>
+          <a href="${verificationUrl}" style="background-color: #0066CC; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block; margin-top: 20px; margin-bottom: 20px;">Vérifier mon adresse email</a>
+          <p>Si vous rencontrez des problèmes avec le bouton ci-dessus, copiez et collez l'URL suivante dans votre navigateur :</p>
+          <p style="word-wrap: break-word;"><a href="${verificationUrl}" style="color: #0066CC; text-decoration: underline;">${verificationUrl}</a></p>
+        </div>
+      `,
     };
-
+  
     try {
-        await sgMail.send(msg);
-        console.log('Email de bienvenue envoyé avec succès');
+      await sgMail.send(msg);
+      console.log('Email de bienvenue envoyé avec succès');
     } catch (error) {
-        console.error('Erreur lors de l\'envoi de l\'email:', error);
+      console.error('Erreur lors de l\'envoi de l\'email:', error);
     }
-}
-
+  }
+  
 
 }
 

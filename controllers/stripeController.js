@@ -29,7 +29,6 @@ exports.createPayPalPayment = async (req, res) => {
     try {
         const { formationId, clientId, promoCode } = req.body;
 
-        // Vérifier si l'inscription existe déjà
         const inscriptionCheckResult = await pool.query(
             'SELECT * FROM Inscriptions WHERE id_client = $1 AND id_formations = $2 AND statut_inscription = $3',
             [clientId, formationId, 'Confirmé']
@@ -38,7 +37,6 @@ exports.createPayPalPayment = async (req, res) => {
             return res.status(400).send({ error: 'Vous avez déjà payé cette formation.' });
         }
 
-        // Calculer le prix avec éventuellement un code promo
         let price;
         const formationResult = await pool.query('SELECT prix FROM formations WHERE id_formations = $1', [formationId]);
         if (formationResult.rows.length > 0) {
