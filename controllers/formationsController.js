@@ -35,6 +35,17 @@ const getFormationDetails = async (req, res) => {
   }
 };
 
+const getSimilarFormation = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const formation = await Formation.getSimilarFormations(id);
+    console.log("formation similar id :  ", id);
+    res.status(200).json(formation);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Une erreur est survenue lors de la récupération des formatuons.' });
+  }
+};
 
 
 
@@ -105,5 +116,6 @@ module.exports = {
   updateFormation,
   createFormation,
   getAllWithoutSessions,
-  getFormationDetails
+  getFormationDetails,
+  getSimilarFormation
 };

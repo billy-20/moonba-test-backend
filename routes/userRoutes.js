@@ -34,6 +34,10 @@ router.post('/login', [
 
 router.get('/verifStatus' , UserController.verifyStatus);
 
+router.post('/request-reset', UserController.requestPasswordReset);
+
+router.post('/reset-password', UserController.resetPassword);
+
 router.put('/updateUser/:id_client' , UserController.updateUser);
 
 router.get('/clientInfo/:id_client' , UserController.getInfo);

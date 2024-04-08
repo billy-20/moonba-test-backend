@@ -28,10 +28,10 @@ class UserController {
 
   static async updateUser(req, res){
     const id_client = req.params.id_client;
-    const {  email, newPassword, adresse, type, numero_telephone, nom, prenom, nom_entreprise, numero_tva } = req.body;
+    const {  email, newPassword, adresse, type, numero_telephone, nom, prenom, nom_entreprise, numero_tva , numero_entreprise } = req.body;
     
     try {
-        const result = await User.updateClientInfo(id_client, email, newPassword, adresse, type, numero_telephone, nom, prenom, nom_entreprise, numero_tva);
+        const result = await User.updateClientInfo(id_client, email, newPassword, adresse, type, numero_telephone, nom, prenom, nom_entreprise, numero_tva,numero_entreprise);
         
         if (result.success) {
             res.status(200).json({ message: 'Client and user information updated successfully.' });
@@ -45,6 +45,37 @@ class UserController {
 
 
   }
+
+  static async requestPasswordReset(req, res) {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ message: "Email manquant." });
+    }
+  
+    try {
+      await User.initiatePasswordReset(email);
+      res.status(200).json({ message: " un corurier de réinitialisation a été envoyé a votre email." });
+    } catch (error) {
+      console.error('Error initiating password reset:', error);
+      res.status(500).json({ error: 'Erreur interne du serveur lors de la demande de réinitialisation du mot de passe.' });
+    }
+  }
+
+  // Méthode pour réinitialiser le mot de passe
+static async resetPassword(req, res) {
+  const { token, newPassword } = req.body;
+  if (!token || !newPassword) {
+    return res.status(400).json({ message: "Token ou nouveau mot de passe manquant." });
+  }
+
+  try {
+    await User.resetPassword(token, newPassword);
+    res.status(200).json({ message: "Mot de passe réinitialisé avec succès." });
+  } catch (error) {
+    console.error('Error resetting password:', error);
+    res.status(500).json({ error: 'Erreur interne du serveur lors de la réinitialisation du mot de passe.' });
+  }
+}
 
   static async verifyStatus(req,res) {
   const { verificationToken } = req.query;

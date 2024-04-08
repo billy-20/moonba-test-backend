@@ -115,10 +115,34 @@ PUT http://localhost:3000/users/updateUser/38
 Content-Type: application/json
 
 {
-  "newPassword": "aze"
+  "newPassword": "aze",
+  "adresse": "123 rue de l'Exemple, 75000 Paris",
+  "type": "Particulier",
+  "prenom": "aaa",
+  "nom_entreprise": "",
+  "numero_tva": ""
 }
 
 ###
 GET http://localhost:3000/users/clientInfo/39
 
+
 //https://test-backend-gluw.onrender.com/users/register
+
+###
+POST http://localhost:3000/users/request-reset
+Content-Type: application/json
+
+{
+  "email": "karimrudi9@gmail.com"
+}
+
+
+###
+POST http://localhost:3000/users/reset-password
+Content-Type: application/json
+
+{
+  "token": "7b13530f-fa62-4573-9dfc-a94e73c61320",
+  "newPassword": "aze123aze"
+}

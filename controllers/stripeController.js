@@ -3,7 +3,7 @@
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const paypal = require('@paypal/checkout-server-sdk');
 
-const { PDFDocument, rgb } = require('pdf-lib');
+const puppeteer = require('puppeteer');
 const fs = require('fs');
 const path = require('path');
 const pool = require('../db'); // Assurez-vous que ceci correspond au chemin de votre fichier de connexion à la base de données
@@ -34,6 +34,7 @@ exports.createPayPalPayment = async (req, res) => {
             [clientId, formationId, 'Confirmé']
         );
         if (inscriptionCheckResult.rows.length > 0) {
+            console.log("formation deja paye");
             return res.status(400).send({ error: 'Vous avez déjà payé cette formation.' });
         }
 
@@ -46,6 +47,7 @@ exports.createPayPalPayment = async (req, res) => {
         }
 
         if (promoCode) {
+            console.log("promo code paypal : " , promoCode);
             const promoCodeValidation = await validatePromoCode(promoCode);
             if (!promoCodeValidation.isValid) {
                 return res.status(400).send({ error: 'Code promo invalide ou expiré.' });
@@ -53,7 +55,7 @@ exports.createPayPalPayment = async (req, res) => {
             let discountAmount = (price * promoCodeValidation.discount) / 100;
             price -= discountAmount;
         }
-
+        console.log("price paypal" , price);
         // Créer la transaction PayPal
         const request = new paypal.orders.OrdersCreateRequest();
         request.prefer("return=representation");
@@ -69,7 +71,7 @@ exports.createPayPalPayment = async (req, res) => {
 
         const order = await paypalClient().execute(request);
         // Enregistrer la transaction ou des détails supplémentaires ici si nécessaire
-        await handlePaymentConfirmation(clientId, formationId, price); // Assurez-vous que cette fonction gère correctement PayPal
+        //await handlePaymentConfirmation(clientId, formationId, price); // Assurez-vous que cette fonction gère correctement PayPal
 
         res.json({ id: order.result.id });
     } catch (err) {
@@ -78,6 +80,48 @@ exports.createPayPalPayment = async (req, res) => {
     }
 };
 
+
+exports.verifyPayPalPayment = async (req, res) => {
+    const { orderID, clientId, formationId, promoCode} = req.body; // Assurez-vous d'inclure clientId, formationId, et price dans votre requête
+
+    try {
+        let price;
+        const formationResult = await pool.query('SELECT prix FROM formations WHERE id_formations = $1', [formationId]);
+        if (formationResult.rows.length > 0) {
+            price = formationResult.rows[0].prix;
+        } else {
+            return res.status(404).send({ error: 'Formation non trouvée.' });
+        }
+
+        // Réappliquer la logique de code promo
+        if (promoCode) {
+            const promoCodeValidation = await validatePromoCode(promoCode);
+            if (!promoCodeValidation.isValid) {
+                return res.status(400).send({ error: 'Code promo invalide ou expiré.' });
+            }
+            let discountAmount = (price * promoCodeValidation.discount) / 100;
+            price -= discountAmount;
+        }
+       
+        const request = new paypal.orders.OrdersGetRequest(orderID);
+        const order = await paypalClient().execute(request);
+
+        if (order.result.status === 'COMPLETED') {
+            // Le paiement a été complété avec succès
+            // Procéder à l'inscription de l'utilisateur à la formation ici
+            await handlePaymentConfirmation(clientId, formationId, price);
+            console.log("paiement reussi le prix : " , price);
+            res.status(200).send({ success: true, message: 'Paiement vérifié et inscription réussie.' });
+        } else {
+            // Le paiement n'a pas été complété avec succès
+            res.status(400).send({ success: false, message: 'Paiement non vérifié. Inscription annulée.' });
+        }
+    } catch (err) {
+        console.log(err);
+        console.error('Erreur lors de la vérification du paiement PayPal:', err);
+        res.status(500).send('Erreur lors de la vérification du paiement PayPal et de l\'inscription.');
+    }
+};
 
 
 exports.createPaymentIntentForFormation = async (req, res) => {
@@ -106,7 +150,7 @@ exports.createPaymentIntentForFormation = async (req, res) => {
 
         let discountAmount = 0; 
         if (promoCode) {
-            
+            console.log("promo code" , promoCode);
             const promoCodeValidation = await validatePromoCode(promoCode);
             console.log(promoCode);
             if (!promoCodeValidation.isValid) {
@@ -133,6 +177,7 @@ exports.createPaymentIntentForFormation = async (req, res) => {
 
         res.status(200).send({ clientSecret: paymentIntent.client_secret });
         console.log("payment OK");
+        console.log("price : " , price);
     } catch (error) {
         console.error(error);
         res.status(500).send({ error: 'Erreur lors de la création de l\'intention de paiement.' });
@@ -163,6 +208,8 @@ async function handlePaymentConfirmation(clientId, formationId,price) {
     const sessionQuery = 'SELECT id_session FROM Sessions WHERE id_formations = $1 AND nombre_places > 0 LIMIT 1';
     let sessionId;
     try {
+
+        
         const sessionResult = await pool.query(sessionQuery, [formationId]);
         if (sessionResult.rows.length > 0) {
             sessionId = sessionResult.rows[0].id_session;
@@ -180,7 +227,7 @@ async function handlePaymentConfirmation(clientId, formationId,price) {
 
     const query = 'INSERT INTO Inscriptions (id_client, id_formations, id_session, statut_paiement, date_inscription, statut_inscription) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id_inscription';
     const values = [clientId, formationId, sessionId, statutPaiement, inscriptionDate, statutInscription];
-
+   
 
     try {
         const result = await pool.query(query, values);
@@ -279,55 +326,132 @@ async function sendConfirmationEmail(email, formationId, price, clientId) {
         return;
     }
 
-    const pdfDoc = await PDFDocument.create();
-    const page = pdfDoc.addPage();
-    const fontSize = 12;
-    const textWidth = 50;
-    const initialHeight = page.getHeight() - 4 * fontSize;
-    
-    page.drawText(`Facture pour la formation: ${nameFormation}`, {
-        x: textWidth,
-        y: initialHeight,
-        size: fontSize,
-        color: rgb(0, 0, 0),
-    });
-    page.drawText(`adresse de facturation : ${clientInfo.adresse_facturation}`, {
-        x: textWidth,
-        y: initialHeight,
-        size: fontSize,
-        color: rgb(0, 0, 0),
-    });
-    page.drawText(`numero entreprise du client : ${clientInfo.numero_entreprise}`, {
-        x: textWidth,
-        y: initialHeight,
-        size: fontSize,
-        color: rgb(0, 0, 0),
-    });
-    page.drawText(`Prix: ${price}€`, {
-        x: textWidth,
-        y: initialHeight - 2 * fontSize,
-        size: fontSize,
-        color: rgb(0, 0, 0),
-    });
+    const htmlContent = `
+    <!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Facture de Formation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .invoice-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .header,
+        .footer,
+        .billing-details,
+        .invoice-info,
+        .line-items,
+        .totals {
+            margin-bottom: 20px;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+        }
+        .line-items th,
+        .line-items td {
+            text-align: left;
+            padding: 5px 0;
+        }
+        .totals {
+            text-align: right;
+        }
+        .totals th,
+        .totals td {
+            padding: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="invoice-container">
+        <div class="header">
+            <div>
+                <h2>${nameFormation}</h2>
+            </div>
+            <div>
+                <p>n° SIREN / SIRET : <br>E-mail: <br>Téléphone: </p>
+            </div>
+        </div>
+        <div class="billing-details">
+            <p>Destinataire: ${clientInfo.nom}
+            <p>adresse de facturation : ${clientInfo.adresse_facturation}
+            <p>numero entreprise : ${clientInfo.numero_entreprise}
+            
 
-    if (clientInfo.type === 'Entreprise') {
-        page.drawText(`Entreprise: ${clientInfo.nom}`, {
-            x: textWidth,
-            y: initialHeight - 4 * fontSize,
-            size: fontSize,
-            color: rgb(0, 0, 0),
-        });
-    } else {
-        page.drawText(`Client: ${clientInfo.prenom} ${clientInfo.nom}`, {
-            x: textWidth,
-            y: initialHeight - 4 * fontSize,
-            size: fontSize,
-            color: rgb(0, 0, 0),
-        });
-    }
+        </div>
+        <div class="invoice-info">
+            <p>Facture: <br>Date de facture: "date aujourdh'ui encore a impelemnter" "<br>Date d'échéance: </p>
+        </div>
+        <div class="line-items">
+            <table width="100%">
+                <thead>
+                    <tr>
+                        <th>Description</th>
+                        <th>Quantité</th>
+                        <th>Prix</th>
+                        <th>TVA</th>
+                        <th>Montant</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Les lignes d'articles seront générées ici -->
+                    <tr>
+                        <td></td>
+                        <td></td>
+                        <td>${price} €</td>
+                        <td>${21}</td>
+                        <td> €</td>
+                    </tr>
+                
+                </tbody>
+            </table>
+        </div>
+        <div class="totals">
+            <table width="100%">
+                <tr>
+                    <th>Sous-total HT</th>
+                    
+                </tr>
+                <tr>
+                   
+                  
+                </tr>
+                <tr>
+                    <th>Montant Total EUR</th>
+                    <td>${price} €</td>
+                </tr>
+                <tr>
+                    <th>Montant payé (EUR)</th>
+                  
+                </tr>
+                <tr>
+                    <th>Montant à payer (EUR)</th>
+                    
+                </tr>
+            </table>
+        </div>
+    </div>
+</body>
+</html>
 
-    const pdfBytes = await pdfDoc.save();
-    const pdfBase64 = Buffer.from(pdfBytes).toString('base64');
+    `;
+
+    // Générer le PDF à partir du contenu HTML avec Puppeteer
+    const browser = await puppeteer.launch();
+    const page = await browser.newPage();
+    await page.setContent(htmlContent);
+    const pdfBuffer = await page.pdf({ format: 'A4' });
+    await browser.close();
+
+    // Convertir le buffer PDF en base64
+    const pdfBase64 = pdfBuffer.toString('base64');
 
 
     const msg = {

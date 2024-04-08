@@ -53,6 +53,10 @@ GET http://localhost:3000/formation/getFormationDetails/2
 GET http://localhost:3000/formation/getAllFormationsWithoutSessions
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiZW1haWwiOiJiaWxseUBleGFtcGxlLmNvbSIsInJvbGUiOiJBZG1pbiIsImlhdCI6MTcwODA3NjYwMSwiZXhwIjoxNzA4MDgwMjAxfQ.FMgt4Cu6G2YPBZE0zMdr9EmJ8Ta3PqNU9g6qWqHxsMk
 
+### get similars formations 
+GET http://localhost:3000/formation/getSimilarFormation/10
+
+
 //eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJiaWxseUBleGFtcGxlLmNvbSIsInJvbGUiOiJBZG1pbiIsImlhdCI6MTcwODM1MDM4OSwiZXhwIjoxNzA4MzUzOTg5fQ.V7IfkctYwy-Qd6R_FuFmil2GChb_aQXWTb_CyJPfKos
 ###
 POST http://localhost:3000/sessions/assignerSession HTTP/1.1
@@ -72,7 +76,18 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiZW1haWwiO
 GET http://localhost:3000/sessions/sessionsDisponibles/5
 
 
+###
+PUT http://localhost:3000/formation/updateFormation/10
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NDMsImVtYWlsIjoiYmlsYWxlbGhhZGRhZGkucHJvQGdtYWlsLmNvbSIsInJvbGUiOiJBZG1pbiIsImlhdCI6MTcxMjIyODM0MywiZXhwIjoxNzEyMjMxOTQzfQ.akX95CUbCXbt5qI88DQl7qPxU3H9gm0WWa3VCNxcVZk
 
+{
+  "nomFormation": "Développement Web Avancé 2",
+  "description": "Cette formation couvre les aspects avancés du développement web, incluant les dernières technologies et pratiques.",
+  "niveau": "Avancé",
+  "prix": 450,
+  "duree": 10
+}
 
 ###
 GET http://localhost:3000/sessions/listeInscrits/5
