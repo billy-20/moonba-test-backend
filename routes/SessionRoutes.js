@@ -14,6 +14,8 @@ router.post('/assignerSession' , auth.checkAdmin ,sessionController.assignerSess
 
 router.put('/addNombrePlaces/:sessionId' , auth.checkAdmin ,sessionController.addNombrePlaces);
 
+router.post('/ajouterSession/:formationId' , auth.checkAdmin ,sessionController.ajouterSession);
+
 
 router.get('/listeInscrits/:sessionId' ,sessionController.getInscriptionsParSession);
 

@@ -79,7 +79,19 @@ const sessionController = {
         } catch (error) {
             res.status(500).json({ error: error.message });
         }
+    },
+    
+    ajouterSession : async (req, res) => {
+        const { formationId } = req.params;
+        const {  dateSession, nombrePlaces, adresse, info_supplementaire } = req.body;
+        try {
+            const result = await Session.ajouterSessionAFormation(formationId, dateSession,nombrePlaces, adresse,info_supplementaire);
+            res.status(200).json(result);
+        } catch (error) {
+            res.status(500).json({ error: error.message });
+        }
     }
+    
 };
 
 

@@ -29,6 +29,7 @@ class AuthController {
         );
 
         // Respond with success message, token, user role, and client ID.
+        console.log("login OK");
         res.json({ message: "Login successful", token, role: user.role, clientId: clientId });
       } else {
         // Respond with error message if authentication fails.

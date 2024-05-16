@@ -1,4 +1,5 @@
 // InscriptionModel.js
+const { stripeRefund, paypalRefund } = require('../controllers/refundController');
 
 const pool = require('../db');
 
@@ -12,18 +13,36 @@ class Inscription {
             throw new Error('Erreur lors de la récupération des inscriptions du client : ' + error.message);
         }
     }
+
+    
     static async annulerInscription(inscriptionId) {
-        const getSessionQuery = 'SELECT id_session FROM Inscriptions WHERE id_inscription = $1';
+        const getSessionAndPaymentQuery = `
+            SELECT i.id_session, i.payment_intent_id, i.capture_id, i.prix_final
+            FROM Inscriptions i
+            JOIN Formations f ON i.id_formations = f.id_formations
+            WHERE i.id_inscription = $1`;
         const deleteQuery = 'DELETE FROM Inscriptions WHERE id_inscription = $1 RETURNING *';
         const values = [inscriptionId];
     
         try {
-            const sessionResult = await pool.query(getSessionQuery, values);
+            const sessionResult = await pool.query(getSessionAndPaymentQuery, values);
             if (sessionResult.rows.length > 0) {
                 const sessionId = sessionResult.rows[0].id_session;
+                const paymentIntentId = sessionResult.rows[0].payment_intent_id; // id pour remboursement stripe
+                const captureId = sessionResult.rows[0].capture_id; // id pour remboursement paypal
+                const price = sessionResult.rows[0].prix_final; // prix final payé
     
                 const deleteResult = await pool.query(deleteQuery, values);
                 if (deleteResult.rows.length > 0) {
+                    
+                    if (paymentIntentId) {
+                        await stripeRefund(paymentIntentId);
+                    }
+                    if (captureId) {
+                        await paypalRefund(captureId, price);  
+                    }
+    
+                    // Augmenter le nombre de places
                     await this.augmenterNombrePlaces(sessionId);
     
                     return deleteResult.rows[0];
@@ -31,12 +50,15 @@ class Inscription {
                     throw new Error('Inscription non trouvée.');
                 }
             } else {
-                throw new Error('Session associée à l\'inscription non trouvée.');
+                throw new Error('Session associée à l\'inscription non trouvée ou formation sans prix défini.');
             }
         } catch (error) {
             throw error;
         }
     }
+    
+
+
 static async augmenterNombrePlaces(sessionId) {
     const query = 'UPDATE Sessions SET nombre_places = nombre_places + 1 WHERE id_session = $1 RETURNING *';
     try {

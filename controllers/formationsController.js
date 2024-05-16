@@ -81,9 +81,10 @@ const updateFormation = async(req, res)=>{
 
 const createFormation = async(req, res)=>{
 
-  const { nomFormation, description, niveau, prix, duree } = req.body;
+  const { nomFormation, description, niveau, prix, duree, prerequis } = req.body;
   try {
-      const newFormation = await Formation.createFormation( nomFormation, description, niveau, prix, duree);
+      const newFormation = await Formation.createFormation( nomFormation, description, niveau, prix, duree, prerequis);
+      console.log(prerequis);
       console.log("add formation OK");
       res.json(newFormation);
   } catch (error) {

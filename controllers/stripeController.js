@@ -26,65 +26,46 @@ function paypalClient() {
 }
 
 exports.createPayPalPayment = async (req, res) => {
-    try {
-        const { formationId, clientId, promoCode } = req.body;
+    const { formationId, clientId, promoCode } = req.body;
 
-        const inscriptionCheckResult = await pool.query(
-            'SELECT * FROM Inscriptions WHERE id_client = $1 AND id_formations = $2 AND statut_inscription = $3',
-            [clientId, formationId, 'Confirmé']
-        );
-        if (inscriptionCheckResult.rows.length > 0) {
-            console.log("formation deja paye");
-            return res.status(400).send({ error: 'Vous avez déjà payé cette formation.' });
-        }
+    // Vérification des inscriptions précédentes...
+    const inscriptionCheckResult = await pool.query(
+        'SELECT * FROM Inscriptions WHERE id_client = $1 AND id_formations = $2 AND statut_inscription = $3',
+        [clientId, formationId, 'Confirmé']
+    );
+    if (inscriptionCheckResult.rows.length > 0) {
+        return res.status(400).send({ error: 'Vous avez déjà payé cette formation.' });
+    }
 
-        let price;
-        const formationResult = await pool.query('SELECT prix FROM formations WHERE id_formations = $1', [formationId]);
-        if (formationResult.rows.length > 0) {
-            price = formationResult.rows[0].prix;
-        } else {
-            return res.status(404).send({ error: 'Formation non trouvée.' });
-        }
+    let price = await calculatePrice(formationId, promoCode); // Implémentez cette fonction pour récupérer et ajuster le prix
 
-        if (promoCode) {
-            console.log("promo code paypal : " , promoCode);
-            const promoCodeValidation = await validatePromoCode(promoCode);
-            if (!promoCodeValidation.isValid) {
-                return res.status(400).send({ error: 'Code promo invalide ou expiré.' });
+    const request = new paypal.orders.OrdersCreateRequest();
+    request.requestBody({
+        intent: 'CAPTURE',
+        purchase_units: [{
+            amount: {
+                currency_code: 'EUR',
+                value: price.toString()
             }
-            let discountAmount = (price * promoCodeValidation.discount) / 100;
-            price -= discountAmount;
-        }
-        console.log("price paypal" , price);
-        // Créer la transaction PayPal
-        const request = new paypal.orders.OrdersCreateRequest();
-        request.prefer("return=representation");
-        request.requestBody({
-            intent: 'CAPTURE',
-            purchase_units: [{
-                amount: {
-                    currency_code: 'EUR',
-                    value: price.toString() // Convertir le prix final en chaîne de caractères
-                }
-            }]
-        });
+        }],
+       
+    });
 
+    try {
         const order = await paypalClient().execute(request);
-        // Enregistrer la transaction ou des détails supplémentaires ici si nécessaire
-        //await handlePaymentConfirmation(clientId, formationId, price); // Assurez-vous que cette fonction gère correctement PayPal
-
-        res.json({ id: order.result.id });
+        res.json({ id: order.result.id, approvalUrl: order.result.links.find(link => link.rel === "approve").href });
     } catch (err) {
         console.error(err);
         res.status(500).send('Erreur lors de la création de l\'intention de paiement PayPal.');
     }
 };
 
-
-exports.verifyPayPalPayment = async (req, res) => {
+exports.capturePayPalPayment = async (req, res) => {
     const { orderID, clientId, formationId, promoCode} = req.body; // Assurez-vous d'inclure clientId, formationId, et price dans votre requête
 
     try {
+        const request = new paypal.orders.OrdersCaptureRequest(orderID);
+        const capture = await paypalClient().execute(request);
         let price;
         const formationResult = await pool.query('SELECT prix FROM formations WHERE id_formations = $1', [formationId]);
         if (formationResult.rows.length > 0) {
@@ -102,14 +83,90 @@ exports.verifyPayPalPayment = async (req, res) => {
             let discountAmount = (price * promoCodeValidation.discount) / 100;
             price -= discountAmount;
         }
-       
-        const request = new paypal.orders.OrdersGetRequest(orderID);
-        const order = await paypalClient().execute(request);
+        if (capture.result.status === 'COMPLETED') {
+            // Capture réussie, enregistrez les détails ici.
+            const captureID = capture.result.purchase_units[0].payments.captures[0].id;
+            console.log(captureID);
+            await handlePaymentConfirmation(clientId, formationId, price , captureID , null);
+            console.log("paiement reussi le prix : " , price);
 
+            res.status(200).json({ success: true, captureID });
+        } else {
+            res.status(500).json({ success: false, message: 'Échec de la capture du paiement.' });
+        }
+    } catch (err) {
+        console.error('Erreur lors de la capture du paiement PayPal:', err);
+        res.status(500).json({ success: false, error: err.message });
+    }
+};
+
+async function calculatePrice(formationId, promoCode) {
+    const formationResult = await pool.query('SELECT prix FROM formations WHERE id_formations = $1', [formationId]);
+    if (formationResult.rows.length === 0) {
+        return { error: 'Formation non trouvée.', status: 404 };
+    }
+    let price = formationResult.rows[0].prix;
+
+    if (promoCode) {
+        const promoCodeValidation = await validatePromoCode(promoCode);
+        if (!promoCodeValidation.isValid) {
+            return { error: 'Code promo invalide ou expiré.', status: 400 };
+        }
+        price -= (price * promoCodeValidation.discount) / 100;
+    }
+    return price;
+}
+
+
+async function checkOrderStatus(orderID) {
+    try {
+        const request = new paypal.orders.OrdersGetRequest(orderID);
+        console.log(request);
+        const order = await paypalClient().execute(request);
+        console.log("status de l'order 2 : ",order.result.status);
+        return order.result;
+    } catch (error) {
+        console.error('Erreur lors de la récupération de l\'état de la commande:', error);
+        throw error; // Propager l'erreur pour un traitement plus haut dans la pile d'appels
+    }
+}
+
+exports.verifyPayPalPayment = async (req, res) => {
+    const { orderID, clientId, formationId, promoCode} = req.body; // Assurez-vous d'inclure clientId, formationId, et price dans votre requête
+
+    try {
+        verifyAndCapturePayment(orderID);
+        let price;
+        const formationResult = await pool.query('SELECT prix FROM formations WHERE id_formations = $1', [formationId]);
+        if (formationResult.rows.length > 0) {
+            price = formationResult.rows[0].prix;
+        } else {
+            return res.status(404).send({ error: 'Formation non trouvée.' });
+        }
+
+        // Réappliquer la logique de code promo
+        if (promoCode) {
+            const promoCodeValidation = await validatePromoCode(promoCode);
+            if (!promoCodeValidation.isValid) {
+                return res.status(400).send({ error: 'Code promo invalide ou expiré.' });
+            }
+            let discountAmount = (price * promoCodeValidation.discount) / 100;
+            price -= discountAmount;
+        }
+        const orderDetails = await checkOrderStatus(orderID);
+        if (orderDetails.status === 'COMPLETED') {
+            console.log("commande deja capture");
+            return res.status(400).send({ error: 'Cette commande a déjà été capturée.' });
+        }
+        const request = new paypal.orders.OrdersCaptureRequest(orderID);
+        const order = await paypalClient().execute(request);
+        console.log(order.result.id);
         if (order.result.status === 'COMPLETED') {
             // Le paiement a été complété avec succès
+            const captureID = order.result.purchase_units[0].payments.captures[0].id;
+            console.log(captureID);
             // Procéder à l'inscription de l'utilisateur à la formation ici
-            await handlePaymentConfirmation(clientId, formationId, price);
+            await handlePaymentConfirmation(clientId, formationId, price , captureID , null );
             console.log("paiement reussi le prix : " , price);
             res.status(200).send({ success: true, message: 'Paiement vérifié et inscription réussie.' });
         } else {
@@ -122,6 +179,33 @@ exports.verifyPayPalPayment = async (req, res) => {
         res.status(500).send('Erreur lors de la vérification du paiement PayPal et de l\'inscription.');
     }
 };
+async function verifyAndCapturePayment(orderID) {
+    console.log(`Début de la vérification de l'état de la commande: ${orderID}`);
+    try {
+        const orderDetails = await checkOrderStatus(orderID);
+        console.log(`Statut récupéré pour la commande ${orderID}: ${orderDetails.status}`);
+
+        if (orderDetails.status === 'COMPLETED') {
+            console.log(`Commande ${orderID} déjà capturée`);
+            return { success: false, message: 'Cette commande a déjà été capturée.' };
+        }
+
+        console.log(`Tentative de capture de la commande ${orderID}`);
+        const request = new paypal.orders.OrdersCaptureRequest(orderID);
+        const capture = await paypalClient().execute(request);
+        console.log(`Résultat de la capture pour la commande ${orderID}: ${capture.result.status}`);
+
+        if (capture.result.status === 'COMPLETED') {
+            console.log(`Capture réussie pour la commande ${orderID}`);
+            return { success: true, message: 'Paiement capturé avec succès.' };
+        } else {
+            throw new Error(`La capture a échoué pour la commande ${orderID}`);
+        }
+    } catch (err) {
+        console.error(`Erreur lors de la capture du paiement pour la commande ${orderID}:`, err);
+        throw err;
+    }
+}
 
 
 exports.createPaymentIntentForFormation = async (req, res) => {
@@ -173,7 +257,7 @@ exports.createPaymentIntentForFormation = async (req, res) => {
         });
 
        
-        await handlePaymentConfirmation(clientId, formationId,price);
+        await handlePaymentConfirmation(clientId, formationId,price , null , paymentIntent.id );
 
         res.status(200).send({ clientSecret: paymentIntent.client_secret });
         console.log("payment OK");
@@ -202,7 +286,7 @@ async function validatePromoCode(promoCode) {
     }
 }
 
-async function handlePaymentConfirmation(clientId, formationId,price) {
+async function handlePaymentConfirmation(clientId, formationId,price , captureID , paymentIntentId ) {
     
    
     const sessionQuery = 'SELECT id_session FROM Sessions WHERE id_formations = $1 AND nombre_places > 0 LIMIT 1';
@@ -225,8 +309,8 @@ async function handlePaymentConfirmation(clientId, formationId,price) {
     const statutPaiement = 'Payé';
     const statutInscription='Confirmé';
 
-    const query = 'INSERT INTO Inscriptions (id_client, id_formations, id_session, statut_paiement, date_inscription, statut_inscription) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id_inscription';
-    const values = [clientId, formationId, sessionId, statutPaiement, inscriptionDate, statutInscription];
+    const query = 'INSERT INTO Inscriptions (id_client, id_formations, id_session, statut_paiement, date_inscription, statut_inscription, payment_intent_id , capture_id, prix_final) VALUES ($1, $2, $3, $4, $5, $6 , $7 , $8, $9) RETURNING id_inscription';
+    const values = [clientId, formationId, sessionId, statutPaiement, inscriptionDate, statutInscription , paymentIntentId , captureID, price];
    
 
     try {
@@ -302,6 +386,9 @@ async function getClientInfo(clientId) {
 }
 
 
+
+
+
 async function sendConfirmationEmail(email, formationId, price, clientId) {
     let nameFormation;
     const formationQuery = 'SELECT nom_formation FROM formations WHERE id_formations = $1';
@@ -316,15 +403,25 @@ async function sendConfirmationEmail(email, formationId, price, clientId) {
         console.error('Erreur lors de la récupération du nom de la formation:', error);
         return;
     }
-
+   
 
     let clientInfo;
     try {
         clientInfo = await getClientInfo(clientId);
+        console.log(clientInfo.adresse);
     } catch (error) {
         console.error('Erreur lors de la récupération des infos du client:', error);
         return;
     }
+    const numericPrice = parseFloat(price);
+
+    const TAUXTVA = 0.21;
+    const montantTVA = numericPrice * TAUXTVA;
+    const totalTTC = numericPrice + montantTVA;
+    const currentDate = new Date().toLocaleDateString("fr-FR");
+    const dueDate = new Date();
+    dueDate.setDate(dueDate.getDate() + 30);
+    const dueDateString = dueDate.toLocaleDateString("fr-FR");
 
     const htmlContent = `
     <!DOCTYPE html>
@@ -376,18 +473,18 @@ async function sendConfirmationEmail(email, formationId, price, clientId) {
                 <h2>${nameFormation}</h2>
             </div>
             <div>
-                <p>n° SIREN / SIRET : <br>E-mail: <br>Téléphone: </p>
+                <p>n° SIREN / SIRET : <br>E-mail:${`formations@moonba-studio.com`} <br>Téléphone:${12345678} </p>
             </div>
         </div>
         <div class="billing-details">
             <p>Destinataire: ${clientInfo.nom}
-            <p>adresse de facturation : ${clientInfo.adresse_facturation}
-            <p>numero entreprise : ${clientInfo.numero_entreprise}
+            <p>adresse de facturation : ${clientInfo.adresse}
+            <p>Numéro d'entreprise : ${clientInfo.numero_entreprise ? clientInfo.numero_entreprise : 'Non spécifié'}</p>
             
 
         </div>
         <div class="invoice-info">
-            <p>Facture: <br>Date de facture: "date aujourdh'ui encore a impelemnter" "<br>Date d'échéance: </p>
+            <p>Facture: <br>Date de facture: ${currentDate} "<br>Date d'échéance:  ${dueDateString}</p>
         </div>
         <div class="line-items">
             <table width="100%">
@@ -403,11 +500,10 @@ async function sendConfirmationEmail(email, formationId, price, clientId) {
                 <tbody>
                     <!-- Les lignes d'articles seront générées ici -->
                     <tr>
-                        <td></td>
-                        <td></td>
-                        <td>${price} €</td>
-                        <td>${21}</td>
-                        <td> €</td>
+                        <td>${nameFormation}</td>
+                        <td>${numericPrice.toFixed(2)} €</td>
+                        <td>${montantTVA.toFixed(2)} €</td>
+                        <td>${totalTTC.toFixed(2)} €</td>
                     </tr>
                 
                 </tbody>
@@ -417,23 +513,27 @@ async function sendConfirmationEmail(email, formationId, price, clientId) {
             <table width="100%">
                 <tr>
                     <th>Sous-total HT</th>
-                    
+                    <td>${numericPrice.toFixed(2)} €</td>
+
                 </tr>
                 <tr>
-                   
+                <th>Total TVA</th>
+                <td>${montantTVA.toFixed(2)} €</td>
                   
                 </tr>
                 <tr>
-                    <th>Montant Total EUR</th>
-                    <td>${price} €</td>
+                    <th>Montant Total TTC</th>
+                    <td>${totalTTC.toFixed(2)} €</td>
                 </tr>
                 <tr>
                     <th>Montant payé (EUR)</th>
-                  
+                    <td>${totalTTC.toFixed(2)} €</td>
+
                 </tr>
                 <tr>
                     <th>Montant à payer (EUR)</th>
-                    
+                    <td>${totalTTC.toFixed(2)} €</td>
+
                 </tr>
             </table>
         </div>
@@ -458,8 +558,9 @@ async function sendConfirmationEmail(email, formationId, price, clientId) {
         to: email,
         from: 'formations@moonba-studio.com', // email de sendgrid
         subject: 'Confirmation de votre inscription à la formation',
-        text: `Votre paiement a été accepté et vous êtes maintenant inscrit à la formation. Nom de la formation: ${nameFormation}`,
-        html: `<strong>Votre paiement a été accepté et vous êtes maintenant inscrit à la formation.</strong> Nom de la formation: ${nameFormation}`,
+        text: `Votre paiement a été accepté et vous êtes maintenant inscrit à la formation. 
+        Nom de la formation: ${nameFormation}`,
+        html: `<strong>Votre paiement a été accepté et vous êtes maintenant inscrit à la formation.</strong> <br> Nom de la formation: ${nameFormation}`,
         attachments: [
             {
                 content: pdfBase64,

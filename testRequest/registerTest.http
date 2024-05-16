@@ -96,12 +96,20 @@ Content-Type: application/json
   "password": "aze"
 }
 
+### Test de la connexion d'un utilisateur
+POST http://localhost:3000/users/login
+Content-Type: application/json
+
+{
+  "email": "bilal.el.haddadi77@gmail.com",
+  "password": "aze"
+}
+
 //https://test-backend-gluw.onrender.com
 
 
 
-
-### Test de la connexion d'un utilisateur
+### Test de la connexion d'un utilisateur backend deploye
 POST https://test-backend-gluw.onrender.com/users/login
 Content-Type: application/json
 

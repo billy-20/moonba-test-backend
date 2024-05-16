@@ -45,3 +45,9 @@ GET http://localhost:3000/sessions/sessionsDisponibles/1
 ###
 GET http://localhost:3000/clients/formations/1/inscriptions
 Accept: application/json
+
+
+###
+PUT http://localhost:3000/clients/annuler/97
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NDQsImVtYWlsIjoiYmlsYWwuZWwuaGFkZGFkaTc3QGdtYWlsLmNvbSIsInJvbGUiOiJDbGllbnQiLCJpYXQiOjE3MTQxMjQwNzUsImV4cCI6MTcxNDEyNzY3NX0.lCuSo2cUTuLG4FjfoYHvCOUSZs3L2EI-jss_7s06P8o

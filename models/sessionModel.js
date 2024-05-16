@@ -39,7 +39,7 @@ class Session {
 
     static async getAllSessionsWithInscription() {
         const query = `
-            SELECT DISTINCT s.id_session, s.adresse /* Assurez-vous d'ajuster les colonnes selon votre schéma */
+            SELECT DISTINCT s.id_session, s.adresse, s.date /* Assurez-vous d'ajuster les colonnes selon votre schéma */
             FROM Sessions s
             JOIN Inscriptions i ON s.id_session = i.id_session
             WHERE EXISTS (
@@ -124,6 +124,22 @@ static async assignerSessionAUneFormation(formationId, dateSession, nombrePlaces
         client.release();
     }
 }
+
+static async ajouterSessionAFormation(formId, dateSession, nombrePlaces, adresse, infoSupplementaire) {
+    try {
+        const existingSessions = await this.getSessionsDisponibles(formId);
+        if (existingSessions.length > 0) {
+            return await this.assignerSessionAUneFormation(formId, dateSession, nombrePlaces, adresse, infoSupplementaire);
+        } else {
+            console.log('Aucune session existante pour cette formation veuillez assigner d abord une session pour celle ci ensuite vous pourrez ajouter plus de sessions a cette formation');
+            throw new Error('Aucune session existante pour cette formation, veuillez d\'abord créer une session initiale.');
+        }
+    } catch (error) {
+        console.error('Erreur lors de l\'ajout d\'une nouvelle session :', error);
+        throw new Error('Erreur lors de l\'ajout d\'une nouvelle session : ' + error.message);
+    }
+}
+
 
 static async changeSession(inscriptionId, newSessionId) {
     const client = await pool.connect();

@@ -11,11 +11,12 @@ class Formation {
    * @param {string} niveau - Le niveau requis pour la formation.
    * @param {number} prix - Le prix de la formation.
    * @param {number} duree - La durée de la formation en jours.
+   * @param {string} prerequis - Le(s) prerequis recomande pour participer a la formation
    * @returns {Promise<Object>} La formation créée.
    */
-  static async createFormation(nomFormation, description, niveau, prix, duree) {
-    const query = 'INSERT INTO formations (nom_formation, description, niveau, prix, duree) VALUES ($1, $2, $3, $4, $5) RETURNING *';
-    const values = [nomFormation, description, niveau, prix, duree];
+  static async createFormation(nomFormation, description, niveau, prix, duree, prerequis) {
+    const query = 'INSERT INTO formations (nom_formation, description, niveau, prix, duree, prerequis) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *';
+    const values = [nomFormation, description, niveau, prix, duree, prerequis];
     
     try {
       const result = await pool.query(query, values);
@@ -48,24 +49,38 @@ class Formation {
   }
   
   /**
-   * Récupère les détails d'une formation spécifique par son ID.
-   * @param {number} id - L'ID de la formation à récupérer.
-   * @returns {Promise<Object>} Détails de la formation spécifiée.
-   */
-  static async getFormationDetail(id){
-    try {
-      const query = 'SELECT * FROM formations WHERE id_formations = $1';
-      const { rows } = await pool.query(query, [id]);
-      if (rows.length > 0) {
-          return rows[0];
-      } else {
-          throw new Error('Formation not found');
-      }
-    } catch (error) {
-      console.error('Error getting formation details:', error);
-      throw error;
+ * Récupère les détails d'une formation spécifique par son ID, incluant le programme lié.
+ * @param {number} id - L'ID de la formation à récupérer.
+ * @returns {Promise<Object>} Détails de la formation spécifiée.
+ */
+static async getFormationDetail(id) {
+  try {
+    // Modifier la requête pour inclure les détails de la prochaine session et du programme lié
+    const query = `
+      SELECT f.*, p.explication, p.ebauches_description, p.avenir_sujet, p.impact_durable, s.id_session, s.date, s.nombre_places
+      FROM formations f
+      LEFT JOIN programmes p ON f.id_formations = p.id_formations
+      LEFT JOIN (
+        SELECT id_session, id_formations, date, nombre_places
+        FROM sessions
+        WHERE id_formations = $1 AND date >= CURRENT_DATE
+        ORDER BY date ASC
+        LIMIT 1
+      ) s ON f.id_formations = s.id_formations
+      WHERE f.id_formations = $1
+    `;
+    const { rows } = await pool.query(query, [id]);
+    if (rows.length > 0) {
+      return rows[0];
+    } else {
+      throw new Error('Formation not found');
     }
+  } catch (error) {
+    console.error('Error getting formation details:', error);
+    throw error;
   }
+}
+
 
   /**
    * Récupère les formations similaires basées sur le nom et la description.
