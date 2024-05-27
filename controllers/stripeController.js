@@ -13,7 +13,11 @@ sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 // service de SMS (double verification)
 
 
-
+/**
+ * Configure l'environnement PayPal pour les requêtes.
+ * 
+ * @returns {paypal.core.SandboxEnvironment} L'environnement PayPal configuré.
+ */
 function environment() {
     let clientId = process.env.PAYPAL_CLIENT_ID;
     let clientSecret = process.env.PAYPAL_CLIENT_SECRET;
@@ -21,10 +25,21 @@ function environment() {
     return new paypal.core.SandboxEnvironment(clientId, clientSecret);
 }
 
+/**
+ * Crée un client PayPal pour effectuer des requêtes.
+ * 
+ * @returns {paypal.core.PayPalHttpClient} Le client PayPal.
+ */
 function paypalClient() {
     return new paypal.core.PayPalHttpClient(environment());
 }
 
+/**
+ * Crée une intention de paiement avec PayPal.
+ * 
+ * @param {Object} req - L'objet de la requête HTTP, contenant les informations de la formation et du client.
+ * @param {Object} res - L'objet de la réponse HTTP.
+ */
 exports.createPayPalPayment = async (req, res) => {
     const { formationId, clientId, promoCode } = req.body;
 
@@ -60,6 +75,12 @@ exports.createPayPalPayment = async (req, res) => {
     }
 };
 
+/**
+ * Capture un paiement PayPal.
+ * 
+ * @param {Object} req - L'objet de la requête HTTP, contenant les informations du paiement.
+ * @param {Object} res - L'objet de la réponse HTTP.
+ */
 exports.capturePayPalPayment = async (req, res) => {
     const { orderID, clientId, formationId, promoCode} = req.body; // Assurez-vous d'inclure clientId, formationId, et price dans votre requête
 
@@ -74,7 +95,6 @@ exports.capturePayPalPayment = async (req, res) => {
             return res.status(404).send({ error: 'Formation non trouvée.' });
         }
 
-        // Réappliquer la logique de code promo
         if (promoCode) {
             const promoCodeValidation = await validatePromoCode(promoCode);
             if (!promoCodeValidation.isValid) {
@@ -84,11 +104,8 @@ exports.capturePayPalPayment = async (req, res) => {
             price -= discountAmount;
         }
         if (capture.result.status === 'COMPLETED') {
-            // Capture réussie, enregistrez les détails ici.
             const captureID = capture.result.purchase_units[0].payments.captures[0].id;
-            console.log(captureID);
             await handlePaymentConfirmation(clientId, formationId, price , captureID , null);
-            console.log("paiement reussi le prix : " , price);
 
             res.status(200).json({ success: true, captureID });
         } else {
@@ -100,6 +117,13 @@ exports.capturePayPalPayment = async (req, res) => {
     }
 };
 
+/**
+ * Calcule le prix final d'une formation en appliquant un code promo si présent.
+ * 
+ * @param {number} formationId - L'ID de la formation.
+ * @param {string} promoCode - Le code promotionnel (optionnel).
+ * @returns {Promise<number>} Le prix final après application du code promo.
+ */
 async function calculatePrice(formationId, promoCode) {
     const formationResult = await pool.query('SELECT prix FROM formations WHERE id_formations = $1', [formationId]);
     if (formationResult.rows.length === 0) {
@@ -117,13 +141,16 @@ async function calculatePrice(formationId, promoCode) {
     return price;
 }
 
-
+/**
+ * Vérifie l'état d'une commande PayPal par son identifiant.
+ * 
+ * @param {string} orderID - L'identifiant de la commande PayPal.
+ * @returns {Promise<Object>} L'état de la commande.
+ */
 async function checkOrderStatus(orderID) {
     try {
         const request = new paypal.orders.OrdersGetRequest(orderID);
-        console.log(request);
         const order = await paypalClient().execute(request);
-        console.log("status de l'order 2 : ",order.result.status);
         return order.result;
     } catch (error) {
         console.error('Erreur lors de la récupération de l\'état de la commande:', error);
@@ -131,6 +158,12 @@ async function checkOrderStatus(orderID) {
     }
 }
 
+/**
+ * Vérifie et capture un paiement avec PayPal.
+ * 
+ * @param {Object} req - L'objet de la requête HTTP, contenant les informations du paiement.
+ * @param {Object} res - L'objet de la réponse HTTP.
+ */
 exports.verifyPayPalPayment = async (req, res) => {
     const { orderID, clientId, formationId, promoCode} = req.body; // Assurez-vous d'inclure clientId, formationId, et price dans votre requête
 
@@ -155,19 +188,15 @@ exports.verifyPayPalPayment = async (req, res) => {
         }
         const orderDetails = await checkOrderStatus(orderID);
         if (orderDetails.status === 'COMPLETED') {
-            console.log("commande deja capture");
             return res.status(400).send({ error: 'Cette commande a déjà été capturée.' });
         }
         const request = new paypal.orders.OrdersCaptureRequest(orderID);
         const order = await paypalClient().execute(request);
-        console.log(order.result.id);
         if (order.result.status === 'COMPLETED') {
             // Le paiement a été complété avec succès
             const captureID = order.result.purchase_units[0].payments.captures[0].id;
-            console.log(captureID);
             // Procéder à l'inscription de l'utilisateur à la formation ici
             await handlePaymentConfirmation(clientId, formationId, price , captureID , null );
-            console.log("paiement reussi le prix : " , price);
             res.status(200).send({ success: true, message: 'Paiement vérifié et inscription réussie.' });
         } else {
             // Le paiement n'a pas été complété avec succès
@@ -179,24 +208,25 @@ exports.verifyPayPalPayment = async (req, res) => {
         res.status(500).send('Erreur lors de la vérification du paiement PayPal et de l\'inscription.');
     }
 };
+
+/**
+ * Vérifie et capture un paiement pour une commande PayPal.
+ * 
+ * @param {string} orderID - L'identifiant de la commande PayPal.
+ * @returns {Promise<Object>} Résultat indiquant si le paiement a été capturé avec succès ou non.
+ */
 async function verifyAndCapturePayment(orderID) {
-    console.log(`Début de la vérification de l'état de la commande: ${orderID}`);
     try {
         const orderDetails = await checkOrderStatus(orderID);
-        console.log(`Statut récupéré pour la commande ${orderID}: ${orderDetails.status}`);
 
         if (orderDetails.status === 'COMPLETED') {
-            console.log(`Commande ${orderID} déjà capturée`);
             return { success: false, message: 'Cette commande a déjà été capturée.' };
         }
 
-        console.log(`Tentative de capture de la commande ${orderID}`);
         const request = new paypal.orders.OrdersCaptureRequest(orderID);
         const capture = await paypalClient().execute(request);
-        console.log(`Résultat de la capture pour la commande ${orderID}: ${capture.result.status}`);
 
         if (capture.result.status === 'COMPLETED') {
-            console.log(`Capture réussie pour la commande ${orderID}`);
             return { success: true, message: 'Paiement capturé avec succès.' };
         } else {
             throw new Error(`La capture a échoué pour la commande ${orderID}`);
@@ -207,7 +237,12 @@ async function verifyAndCapturePayment(orderID) {
     }
 }
 
-
+/**
+ * Crée une intention de paiement pour une formation avec Stripe.
+ * 
+ * @param {Object} req - L'objet de la requête HTTP, contenant les informations de la formation et du client.
+ * @param {Object} res - L'objet de la réponse HTTP.
+ */
 exports.createPaymentIntentForFormation = async (req, res) => {
     try {
         const { formationId, clientId, promoCode } = req.body; 
@@ -234,15 +269,12 @@ exports.createPaymentIntentForFormation = async (req, res) => {
 
         let discountAmount = 0; 
         if (promoCode) {
-            console.log("promo code" , promoCode);
             const promoCodeValidation = await validatePromoCode(promoCode);
-            console.log(promoCode);
             if (!promoCodeValidation.isValid) {
                 return res.status(400).send({ error: 'Code promo invalide ou expiré.' });
             }
             discountAmount = (price * promoCodeValidation.discount) / 100;
             price -= discountAmount; 
-            console.log(price);
         }
 
         const paymentIntent = await stripe.paymentIntents.create({
@@ -260,15 +292,18 @@ exports.createPaymentIntentForFormation = async (req, res) => {
         await handlePaymentConfirmation(clientId, formationId,price , null , paymentIntent.id );
 
         res.status(200).send({ clientSecret: paymentIntent.client_secret });
-        console.log("payment OK");
-        console.log("price : " , price);
     } catch (error) {
         console.error(error);
         res.status(500).send({ error: 'Erreur lors de la création de l\'intention de paiement.' });
     }
 };
 
-
+/**
+ * Valide un code promotionnel et retourne le taux de réduction.
+ * 
+ * @param {string} promoCode - Le code promo à valider.
+ * @returns {Promise<Object>} Un objet indiquant si le code est valide et le taux de réduction.
+ */
 async function validatePromoCode(promoCode) {
     try {
         const promoCodeQuery = 'SELECT discount FROM PromoCodes WHERE code = $1 AND is_active = true ';
@@ -286,6 +321,15 @@ async function validatePromoCode(promoCode) {
     }
 }
 
+/**
+ * Gère la confirmation de paiement et l'inscription à la formation.
+ * 
+ * @param {number} clientId - L'ID du client.
+ * @param {number} formationId - L'ID de la formation.
+ * @param {number} price - Le prix payé.
+ * @param {string|null} captureID - L'ID de capture PayPal, si applicable.
+ * @param {string|null} paymentIntentId - L'ID de l'intention de paiement Stripe, si applicable.
+ */
 async function handlePaymentConfirmation(clientId, formationId,price , captureID , paymentIntentId ) {
     
    
@@ -316,7 +360,6 @@ async function handlePaymentConfirmation(clientId, formationId,price , captureID
     try {
         const result = await pool.query(query, values);
         const idInscription = result.rows[0].id_inscription;
-        console.log(`Inscription enregistrée avec succès. ID: ${idInscription}`);
 
         const decrementPlacesQuery = 'UPDATE sessions SET nombre_places = nombre_places - 1 WHERE id_formations = $1 AND nombre_places > 0 RETURNING nombre_places';
         const decrementResult = await pool.query(decrementPlacesQuery, [formationId]);
@@ -337,6 +380,13 @@ async function handlePaymentConfirmation(clientId, formationId,price , captureID
     }
 }
 
+
+/**
+ * Récupère l'email d'un client à partir de son ID.
+ * 
+ * @param {number} clientId - L'ID du client.
+ * @returns {Promise<string>} L'email du client.
+ */
 async function getClientEmail(clientId) {
     try {
         const queryUser = 'SELECT id_user FROM Clients WHERE id_client = $1';
@@ -360,7 +410,13 @@ async function getClientEmail(clientId) {
 }
 
 
-
+/**
+ * Récupère les informations détaillées d'un client par son identifiant.
+ * 
+ * @param {number} clientId - L'identifiant du client.
+ * @returns {Promise<Object>} Les informations du client, y compris le nom et, selon le type de client, 
+ *                            des informations supplémentaires comme l'adresse de facturation pour les entreprises.
+ */
 async function getClientInfo(clientId) {
     const clientTypeQuery = 'SELECT type FROM clients WHERE id_client = $1';
     const clientTypeResult = await pool.query(clientTypeQuery, [clientId]);
@@ -388,7 +444,14 @@ async function getClientInfo(clientId) {
 
 
 
-
+/**
+ * Envoie un email de confirmation d'inscription à une formation.
+ * 
+ * @param {string} email - L'email du destinataire.
+ * @param {number} formationId - L'ID de la formation.
+ * @param {number} price - Le prix final payé.
+ * @param {number} clientId - L'ID du client.
+ */
 async function sendConfirmationEmail(email, formationId, price, clientId) {
     let nameFormation;
     const formationQuery = 'SELECT nom_formation FROM formations WHERE id_formations = $1';
@@ -408,7 +471,6 @@ async function sendConfirmationEmail(email, formationId, price, clientId) {
     let clientInfo;
     try {
         clientInfo = await getClientInfo(clientId);
-        console.log(clientInfo.adresse);
     } catch (error) {
         console.error('Erreur lors de la récupération des infos du client:', error);
         return;

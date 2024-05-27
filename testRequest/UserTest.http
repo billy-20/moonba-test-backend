@@ -1,0 +1,84 @@
+@apiUrl = http://localhost:3000
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NDMsImVtYWlsIjoiYmlsYWxlbGhhZGRhZGkucHJvQGdtYWlsLmNvbSIsInJvbGUiOiJBZG1pbiIsImlhdCI6MTcxNjI4Nzc0MywiZXhwIjoxNzE2MjkxMzQzfQ.8HKne881XLXEf3Jb0eaxrSdgtaLlamN31absS9BqYFU
+
+
+### Enregistrer un Nouvel Utilisateur
+# Enregistre un nouvel utilisateur dans le système avec ses informations complètes.
+POST {{apiUrl}}/users/register HTTP/1.1
+Content-Type: application/json
+
+{
+    "email": "nouvelutilisateur@example.com",
+    "password": "password123",
+    "nom": "Doe",
+    "prenom": "John",
+    "type": "Particulier",
+    "numero_telephone": "0123456789",
+    "adresse": "1234 Rue de l'exemple, Ville, 12345",
+    "nom_entreprise": null,
+    "numero_tva": null,
+    "numero_entreprise": null,
+    "adresse_facturation": null
+}
+
+
+### Connexion d'un Utilisateur
+# Authentifie un utilisateur en vérifiant son email et son mot de passe.
+POST {{apiUrl}}/users/login HTTP/1.1
+Content-Type: application/json
+
+{
+    "email": "nouvelutilisateur@example.com",
+    "password": "password123"
+}
+
+
+### Demander une Réinitialisation du Mot de Passe
+# Initie une demande de réinitialisation de mot de passe pour l'utilisateur.
+POST {{apiUrl}}/users/request-reset HTTP/1.1
+Content-Type: application/json
+
+{
+    "email": "nouvelutilisateur@example.com"
+}
+
+
+### Réinitialiser le Mot de Passe
+# Réinitialise le mot de passe de l'utilisateur en utilisant un token de réinitialisation.
+POST {{apiUrl}}/users/reset-password HTTP/1.1
+Content-Type: application/json
+
+{
+    "token": "token_de_réinitialisation",
+    "newPassword": "newpassword123"
+}
+
+
+### Vérifier le Statut de Vérification d'un Utilisateur
+# Vérifie le statut de vérification d'un utilisateur à l'aide d'un token de vérification.
+GET {{apiUrl}}/users/verifStatus?verificationToken=token_de_vérification HTTP/1.1
+
+
+### Mettre à Jour les Informations d'un Utilisateur
+# Met à jour les informations d'un utilisateur par son identifiant client.
+PUT {{apiUrl}}/users/updateUser/1 HTTP/1.1
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+    "email": "updateduser@example.com",
+    "newPassword": "newSecurePassword123",
+    "adresse": "4321 Nouvelle Rue, Nouvelle Ville, 54321",
+    "type": "Particulier",
+    "numero_telephone": "9876543210",
+    "nom": "Doe",
+    "prenom": "Jane",
+    "nom_entreprise": "",
+    "numero_tva": "",
+    "numero_entreprise": ""
+}
+
+### Obtenir les Informations d'un Client
+# Récupère les informations d'un client par son identifiant.
+GET {{apiUrl}}/users/clientInfo/1 HTTP/1.1
+Authorization: Bearer {{token}}

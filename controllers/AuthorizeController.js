@@ -2,71 +2,70 @@ const User = require('../models/userModel');
 const jwt = require('jsonwebtoken');
 
 /**
- * AuthController class to handle authentication and authorization.
+ * Classe AuthController pour gérer l'authentification et l'autorisation.
  */
 class AuthController {
   /**
-   * loginUser - Authenticates a user and generates a JWT if successful.
+   * loginUser - Authentifie un utilisateur et génère un JWT s'il est authentifié avec succès.
    * 
-   * @param {Object} req - The request object containing user credentials.
-   * @param {Object} res - The response object to send back the JWT and user info.
+   * @param {Object} req - L'objet de requête contenant les identifiants de l'utilisateur.
+   * @param {Object} res - L'objet de réponse pour renvoyer le JWT et les informations de l'utilisateur.
    */
   static async loginUser(req, res) {
     const { email, password } = req.body;
 
     try {
-      // Authenticate the user with email and password.
+      // Authentifier l'utilisateur avec l'email et le mot de passe.
       const user = await User.authenticate(email, password);
       if (user) {
-        // Get client ID for the authenticated user.
+        // Obtenir l'ID client pour l'utilisateur authentifié.
         const clientId = await User.getClientId(user.id);
         
-        // Sign a JWT with user details.
+        // Créer un JWT avec les détails de l'utilisateur.
         const token = jwt.sign(
           { id: user.id, email: user.email, role: user.role },
           process.env.JWT_SECRET, 
-          { expiresIn: '1h' } // Token expires in 1 hour.
+          { expiresIn: '1h' } // Le token expire en 1 heure.
         );
 
-        // Respond with success message, token, user role, and client ID.
-        console.log("login OK");
-        res.json({ message: "Login successful", token, role: user.role, clientId: clientId });
+        // Répondre avec un message de succès, le token, le rôle de l'utilisateur et l'ID client.
+        res.json({ message: "Connexion réussie", token, role: user.role, clientId: clientId });
       } else {
-        // Respond with error message if authentication fails.
-        res.status(401).json({ message: "Invalid credentials" });
+        // Répondre avec un message d'erreur si l'authentification échoue.
+        res.status(401).json({ message: "Identifiants invalides" });
       }
     } catch (error) {
       console.error(error);
-      // Respond with internal server error message.
-      res.status(500).json({ error: 'Internal Server Error' });
+      // Répondre avec un message d'erreur de serveur interne.
+      res.status(500).json({ error: 'Erreur interne du serveur' });
     }
   }
 
   /**
-   * checkAdmin - Middleware to verify if the authenticated user is an admin.
+   * checkAdmin - Middleware pour vérifier si l'utilisateur authentifié est un administrateur.
    * 
-   * @param {Object} req - The request object.
-   * @param {Object} res - The response object.
-   * @param {Function} next - The next middleware function in the stack.
+   * @param {Object} req - L'objet de requête.
+   * @param {Object} res - L'objet de réponse.
+   * @param {Function} next - La fonction middleware suivante dans la pile.
    */
   static async checkAdmin(req, res, next){
     try {
-        // Extract token from the Authorization header.
+        // Extraire le token de l'en-tête Authorization.
         const token = req.headers.authorization.split(" ")[1]; 
-        // Decode and verify the JWT.
+        // Décoder et vérifier le JWT.
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-        // Check if the decoded role is not admin.
+        // Vérifier si le rôle décodé n'est pas admin.
         if (decoded.role !== 'Admin') {
-            // Respond with forbidden access error if not admin.
+            // Répondre avec un message d'erreur d'accès interdit si ce n'est pas un admin.
             return res.status(403).json({ message: "Accès refusé" });
         }
 
-        // Attach decoded user to request object.
+        // Attacher l'utilisateur décodé à l'objet de requête.
         req.user = decoded;
-        next(); // Call next middleware in the stack.
+        next(); // Appeler le middleware suivant dans la pile.
     } catch (error) {
-        // Respond with authentication failed message.
+        // Répondre avec un message d'échec d'authentification.
         return res.status(401).json({ message: "Authentification échouée" });
     }
   }

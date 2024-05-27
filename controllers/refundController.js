@@ -3,6 +3,11 @@
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const paypal = require('@paypal/checkout-server-sdk');
 
+/**
+ * Crée un client PayPal pour interagir avec l'API PayPal.
+ * 
+ * @returns {paypal.core.PayPalHttpClient} Un client HTTP pour communiquer avec PayPal.
+ */
 function paypalClient() {
     let clientId = process.env.PAYPAL_CLIENT_ID;
     let clientSecret = process.env.PAYPAL_CLIENT_SECRET;
@@ -10,10 +15,15 @@ function paypalClient() {
     return new paypal.core.PayPalHttpClient(environment);
 }
 
+/**
+ * Effectue un remboursement via Stripe.
+ * 
+ * @param {string} paymentIntentId - L'identifiant de l'intention de paiement Stripe à rembourser.
+ * @returns {Promise<Object>} Les détails du remboursement Stripe.
+ */
 exports.stripeRefund = async (paymentIntentId) => {
     try {
         const refund = await stripe.refunds.create({ payment_intent: paymentIntentId });
-        console.log('Stripe refund successful:', refund);
         return refund;
     } catch (error) {
         console.error('Stripe refund error:', error);
@@ -21,6 +31,13 @@ exports.stripeRefund = async (paymentIntentId) => {
     }
 };
 
+/**
+ * Effectue un remboursement via PayPal.
+ * 
+ * @param {string} captureId - L'identifiant de la capture PayPal à rembourser.
+ * @param {number} amount - Le montant à rembourser.
+ * @returns {Promise<Object>} Les détails du remboursement PayPal.
+ */
 exports.paypalRefund = async (captureId, amount) => {
     try {
         const request = new paypal.payments.CapturesRefundRequest(captureId);
@@ -31,7 +48,6 @@ exports.paypalRefund = async (captureId, amount) => {
             }
         });
         const refund = await paypalClient().execute(request);
-        console.log('PayPal refund successful:', refund);
         return refund;
     } catch (error) {
         console.error('PayPal refund error:', error);

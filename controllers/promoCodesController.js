@@ -3,6 +3,12 @@ const PromoCode = require('../models/codesPromoModel');
 
 class PromoCodesController {
   
+   /**
+   * Crée un nouveau code promo.
+   * 
+   * @param {Object} req - L'objet de la requête HTTP, contient les informations du nouveau code promo dans req.body.
+   * @param {Object} res - L'objet de la réponse HTTP.
+   */
     static async createCode(req, res) {
         const {code, discount, start_date, end_date, is_active} = req.body;
     
@@ -15,7 +21,12 @@ class PromoCodesController {
         }
       }
 
-
+/**
+   * Récupère tous les codes promotionnels.
+   * 
+   * @param {Object} req - L'objet de la requête HTTP.
+   * @param {Object} res - L'objet de la réponse HTTP.
+   */
 static async getAllCodes(req, res) {
     try {
       const codes = await PromoCode.getAllPromoCodes();
@@ -26,6 +37,12 @@ static async getAllCodes(req, res) {
     }
   }
   
+  /**
+   * Supprime un code promotionnel par son identifiant.
+   * 
+   * @param {Object} req - L'objet de la requête HTTP, contient l'identifiant du code dans req.params.idCode.
+   * @param {Object} res - L'objet de la réponse HTTP.
+   */
   static async deleteCode(req, res) {
     const { idCode } = req.params;
     try {
@@ -40,6 +57,12 @@ static async getAllCodes(req, res) {
     }
   }
   
+   /**
+   * Met à jour un code promotionnel par son identifiant.
+   * 
+   * @param {Object} req - L'objet de la requête HTTP, contient l'identifiant du code et les champs à mettre à jour dans req.params.idCode et req.body.
+   * @param {Object} res - L'objet de la réponse HTTP.
+   */
   static async updateCode(req, res) {
     const { idCode } = req.params;
     const fields = req.body; 

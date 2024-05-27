@@ -1,10 +1,14 @@
 const Formation = require('../models/formationModel');
 
-// Récupérer toutes les formations
+/**
+ * Récupère toutes les formations avec leurs sessions associées.
+ * 
+ * @param {Object} req - L'objet de la requête HTTP.
+ * @param {Object} res - L'objet de la réponse HTTP.
+ */
 const getAll = async (req, res) => {
   try {
     const formations = await Formation.getAllFormationsWithSessions();
-    console.log("all formations ");
     res.status(200).json(formations);
   } catch (error) {
     console.error(error);
@@ -12,10 +16,15 @@ const getAll = async (req, res) => {
   }
 };
 
+/**
+ * Récupère toutes les formations sans leurs sessions associées.
+ * 
+ * @param {Object} req - L'objet de la requête HTTP.
+ * @param {Object} res - L'objet de la réponse HTTP.
+ */
 const getAllWithoutSessions = async (req, res) => {
   try {
     const formations = await Formation.getAllFormationsWithoutSessions();
-    console.log("all formations without sessions ");
     res.status(200).json(formations);
   } catch (error) {
     console.error(error);
@@ -23,11 +32,16 @@ const getAllWithoutSessions = async (req, res) => {
   }
 };
 
+/**
+ * Récupère les détails d'une formation spécifique par son identifiant.
+ * 
+ * @param {Object} req - L'objet de la requête HTTP, contient l'identifiant de la formation.
+ * @param {Object} res - L'objet de la réponse HTTP.
+ */
 const getFormationDetails = async (req, res) => {
   const { id } = req.params;
   try {
     const formation = await Formation.getFormationDetail(id);
-    console.log("formation detail id :  ", id);
     res.status(200).json(formation);
   } catch (error) {
     console.error(error);
@@ -35,11 +49,16 @@ const getFormationDetails = async (req, res) => {
   }
 };
 
+/**
+ * Récupère des formations similaires à une formation spécifique par son identifiant.
+ * 
+ * @param {Object} req - L'objet de la requête HTTP, contient l'identifiant de la formation.
+ * @param {Object} res - L'objet de la réponse HTTP.
+ */
 const getSimilarFormation = async (req, res) => {
   const { id } = req.params;
   try {
     const formation = await Formation.getSimilarFormations(id);
-    console.log("formation similar id :  ", id);
     res.status(200).json(formation);
   } catch (error) {
     console.error(error);
@@ -48,7 +67,12 @@ const getSimilarFormation = async (req, res) => {
 };
 
 
-
+/**
+ * Supprime une formation spécifique par son identifiant.
+ * 
+ * @param {Object} req - L'objet de la requête HTTP, contient l'identifiant de la formation à supprimer.
+ * @param {Object} res - L'objet de la réponse HTTP.
+ */
 const deleteFormation = async (req, res) => {
   const { id } = req.params;
   try {
@@ -64,6 +88,13 @@ const deleteFormation = async (req, res) => {
   }
 };
 
+
+/**
+ * Met à jour une formation spécifique par son identifiant avec les nouveaux détails fournis.
+ * 
+ * @param {Object} req - L'objet de la requête HTTP, contient l'identifiant de la formation et les nouveaux détails.
+ * @param {Object} res - L'objet de la réponse HTTP.
+ */
 const updateFormation = async(req, res)=>{
 
   const { id } = req.params;
@@ -76,16 +107,19 @@ const updateFormation = async(req, res)=>{
       res.status(400).json({ message: error.message });
   }
 
-
 }
 
+/**
+ * Crée une nouvelle formation avec les détails fournis.
+ * 
+ * @param {Object} req - L'objet de la requête HTTP, contient les détails de la nouvelle formation.
+ * @param {Object} res - L'objet de la réponse HTTP.
+ */
 const createFormation = async(req, res)=>{
 
   const { nomFormation, description, niveau, prix, duree, prerequis } = req.body;
   try {
       const newFormation = await Formation.createFormation( nomFormation, description, niveau, prix, duree, prerequis);
-      console.log(prerequis);
-      console.log("add formation OK");
       res.json(newFormation);
   } catch (error) {
     console.log(error);
@@ -95,6 +129,12 @@ const createFormation = async(req, res)=>{
 
 }
 
+/**
+ * Récupère une formation spécifique par son identifiant.
+ * 
+ * @param {Object} req - L'objet de la requête HTTP, contient l'identifiant de la formation.
+ * @param {Object} res - L'objet de la réponse HTTP.
+ */
 const getById = async (req, res) => {
   const { id } = req.params;
   try {

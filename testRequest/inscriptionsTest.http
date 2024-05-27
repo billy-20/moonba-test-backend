@@ -1,53 +1,46 @@
-###
-# GET /clients/:clientId/inscriptions - Get inscriptions by client ID
-###
 
-# Replace :clientId with the actual client ID
-GET http://localhost:3000/clients/22/inscriptions
+
+@apiUrl = http://localhost:3000
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NDMsImVtYWlsIjoiYmlsYWxlbGhhZGRhZGkucHJvQGdtYWlsLmNvbSIsInJvbGUiOiJBZG1pbiIsImlhdCI6MTcxNjI4Nzc0MywiZXhwIjoxNzE2MjkxMzQzfQ.8HKne881XLXEf3Jb0eaxrSdgtaLlamN31absS9BqYFU
+
+
+
+### Obtenir les Inscriptions d'un Client par son Identifiant
+# Récupère toutes les inscriptions payées et confirmées d'un client par son identifiant.
+GET {{apiUrl}}/clients/39/inscriptions HTTP/1.1
+Authorization: Bearer {{token}}
+
+
+
+### Annuler une Inscription et Rembourser le Client
+# Annule une inscription et rembourse le client si nécessaire par l'identifiant de l'inscription.
+PUT {{apiUrl}}/clients/annuler/109 HTTP/1.1
+Authorization: Bearer {{token}}
+
+
+
+### Vérifier l'Inscription d'un Client à une Formation
+# Vérifie si un client est inscrit à une formation spécifique et renvoie le statut de l'inscription.
+GET {{apiUrl}}/clients/1/inscription/2 HTTP/1.1
+Authorization: Bearer {{token}}
+
+### Changer la Session d'une Inscription Existante
+# Change la session d'une inscription existante à une nouvelle session.
+POST {{apiUrl}}/clients/changerSession HTTP/1.1
+Authorization: Bearer {{token}}
 Content-Type: application/json
 
-###
+{
+    "inscriptionId": 456,
+    "nouvelleSessionId": 789
+}
 
-# Example response when successful
-HTTP/1.1 200 OK
-Content-Type: application/json
-
-[
-    {
-        "id_inscription": 1,
-        "id_client": 123,
-        "id_formation": 456,
-        "statut_paiement": "Payé",
-        "date_inscription": "2024-02-07T12:00:00Z"
-    },
-    {
-        "id_inscription": 2,
-        "id_client": 123,
-        "id_formation": 789,
-        "statut_paiement": "Payé",
-        "date_inscription": "2024-02-07T13:00:00Z"
-    }
-]
-
-###
-
-# Example response when no inscriptions found
-HTTP/1.1 200 OK
-Content-Type: application/json
-
-[]
+### Récupérer les Inscriptions pour une Formation Spécifique
+# Récupère les inscriptions pour une formation spécifique, incluant des détails sur les clients.
+GET {{apiUrl}}/clients/formations/1/inscriptions HTTP/1.1
+Authorization: Bearer {{token}}
 
 
-###
-GET http://localhost:3000/sessions/sessionsDisponibles/1
-
-
-###
-GET http://localhost:3000/clients/formations/1/inscriptions
-Accept: application/json
-
-
-###
-PUT http://localhost:3000/clients/annuler/97
-Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NDQsImVtYWlsIjoiYmlsYWwuZWwuaGFkZGFkaTc3QGdtYWlsLmNvbSIsInJvbGUiOiJDbGllbnQiLCJpYXQiOjE3MTQxMjQwNzUsImV4cCI6MTcxNDEyNzY3NX0.lCuSo2cUTuLG4FjfoYHvCOUSZs3L2EI-jss_7s06P8o
+### Vérifier et Valider le Compte d'un Utilisateur
+# Vérifie et valide le compte d'un utilisateur en utilisant un jeton de vérification.
+GET {{apiUrl}}/clients/verify?token=verification_token_here HTTP/1.1

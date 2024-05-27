@@ -3,7 +3,15 @@ const { stripeRefund, paypalRefund } = require('../controllers/refundController'
 
 const pool = require('../db');
 
+
 class Inscription {
+
+    /**
+     * Récupère toutes les inscriptions payées et confirmées d'un client.
+     * 
+     * @param {number} clientId - L'identifiant du client.
+     * @returns {Promise<Array>} Liste des inscriptions du client.
+     */
     static async getInscriptionsByClient(clientId) {
         try {
             const query = 'SELECT * FROM Inscriptions WHERE id_client = $1 AND statut_paiement = \'Payé\' AND statut_inscription=\'Confirmé\'';
@@ -14,7 +22,12 @@ class Inscription {
         }
     }
 
-    
+    /**
+     * Annule une inscription et rembourse le client si nécessaire.
+     * 
+     * @param {number} inscriptionId - L'identifiant de l'inscription.
+     * @returns {Promise<Object>} L'inscription annulée.
+     */
     static async annulerInscription(inscriptionId) {
         const getSessionAndPaymentQuery = `
             SELECT i.id_session, i.payment_intent_id, i.capture_id, i.prix_final
@@ -58,7 +71,12 @@ class Inscription {
     }
     
 
-
+/**
+     * Augmente le nombre de places disponibles pour une session donnée.
+     * 
+     * @param {number} sessionId - L'identifiant de la session.
+     * @returns {Promise<Object>} La session avec le nombre de places mis à jour.
+     */
 static async augmenterNombrePlaces(sessionId) {
     const query = 'UPDATE Sessions SET nombre_places = nombre_places + 1 WHERE id_session = $1 RETURNING *';
     try {
@@ -90,6 +108,13 @@ static async augmenterNombrePlaces(sessionId) {
         }
       }
 
+/**
+     * Change la session d'une inscription existante.
+     * 
+     * @param {number} inscriptionId - L'identifiant de l'inscription.
+     * @param {number} nouvelleSessionId - L'identifiant de la nouvelle session.
+     * @returns {Promise<Object>} L'inscription mise à jour.
+     */      
 static async changerSessionInscription(inscriptionId, nouvelleSessionId) {
   const query = `
       UPDATE Inscriptions
@@ -109,7 +134,12 @@ static async changerSessionInscription(inscriptionId, nouvelleSessionId) {
   }
 }
 
-
+  /**
+     * Récupère les inscriptions pour une formation donnée, incluant des détails supplémentaires sur les clients.
+     * 
+     * @param {number} formationId - L'identifiant de la formation.
+     * @returns {Promise<Array>} Liste des inscriptions avec des détails sur les clients.
+     */
 static async getInscriptionsByFormation(formationId) {
   try {
       const query = `

@@ -4,6 +4,13 @@ const Inscription = require('../models/inscriptionModel');
 const pool = require('../db'); 
 
 const inscriptionController = {
+  
+    /**
+     * Récupère les inscriptions d'un client par son identifiant.
+     * 
+     * @param {Object} req - L'objet de requête HTTP, contient l'identifiant du client dans req.params.clientId.
+     * @param {Object} res - L'objet de réponse HTTP.
+     */
     getInscriptionsByClient: async (req, res) => {
         try {
             const clientId = req.params.clientId; 
@@ -14,6 +21,12 @@ const inscriptionController = {
         }
     },
 
+      /**
+     * Annule une inscription par son identifiant.
+     * 
+     * @param {Object} req - L'objet de requête HTTP, contient l'identifiant de l'inscription dans req.params.inscriptionId.
+     * @param {Object} res - L'objet de réponse HTTP.
+     */
     annulerInscription: async (req, res) => {
         try {
             const inscriptionId = req.params.inscriptionId; 
@@ -23,6 +36,13 @@ const inscriptionController = {
             res.status(500).json({ error: error.message });
         }
     },
+
+    /**
+     * Vérifie si un client est inscrit à une formation spécifique.
+     * 
+     * @param {Object} req - L'objet de requête HTTP, contient les identifiants du client et de la formation dans req.params.
+     * @param {Object} res - L'objet de réponse HTTP.
+     */
     checkInscription: async (req, res) => {
         const { clientId, formationId } = req.params;
         try {
@@ -37,8 +57,13 @@ const inscriptionController = {
           res.status(500).send('Erreur serveur.');
         }
       },
-      // inscriptionController.js
-
+     
+    /**
+     * Change la session d'une inscription existante.
+     * 
+     * @param {Object} req - L'objet de requête HTTP, contient l'identifiant de l'inscription et le nouvel identifiant de session dans req.body.
+     * @param {Object} res - L'objet de réponse HTTP.
+     */
     changerSession :async (req, res) => {
       const { inscriptionId, nouvelleSessionId } = req.body; 
     try {
@@ -49,6 +74,12 @@ const inscriptionController = {
     }
   },
 
+    /**
+     * Récupère les inscriptions à une formation spécifique par son identifiant.
+     * 
+     * @param {Object} req - L'objet de requête HTTP, contient l'identifiant de la formation dans req.params.formationId.
+     * @param {Object} res - L'objet de réponse HTTP.
+     */
    getInscriptionsByFormation: async (req, res) => {
     try {
         const formationId = req.params.formationId;
@@ -59,14 +90,14 @@ const inscriptionController = {
     }
 },
 
-/*
-
-mise en place d'un systeme de transaction (begin , commit , rollback) parce qu'on a plusieurs etapes a faire dans la base de donnees.
-d'abord aller chercher l'user dans la table unverified_users puis insert dans users puis insert dans particulier || entreprise, puis delete de unverified users
-
-*/
+ /**
+     * Vérifie et valide le compte d'un utilisateur en utilisant un jeton de vérification.
+     * Suit un processus de transaction pour s'assurer de la cohérence des données.
+     * 
+     * @param {Object} req - L'objet de requête HTTP, contient le jeton de vérification dans req.query.token.
+     * @param {Object} res - L'objet de réponse HTTP.
+     */
 verify: async (req, res) => {
-  console.log("verify status here");
   const { token } = req.query;
   const client = await pool.connect();
 
@@ -98,7 +129,6 @@ verify: async (req, res) => {
       await client.query(deleteUserQuery, [token]);
 
       await client.query('COMMIT');
-      console.log("verify status OK");
 
       res.status(200).json({ message: 'Votre compte a été vérifié avec succès.' });
     } else {

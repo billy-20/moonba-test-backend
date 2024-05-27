@@ -1,0 +1,53 @@
+### Test de Création d'une Intention de Paiement avec Stripe
+
+
+@apiUrl = http://localhost:3000
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NDMsImVtYWlsIjoiYmlsYWxlbGhhZGRhZGkucHJvQGdtYWlsLmNvbSIsInJvbGUiOiJBZG1pbiIsImlhdCI6MTcxNjI4Nzc0MywiZXhwIjoxNzE2MjkxMzQzfQ.8HKne881XLXEf3Jb0eaxrSdgtaLlamN31absS9BqYFU
+
+
+
+# Création d'une intention de paiement pour une formation avec Stripe
+POST {{apiUrl}}/stripe/create-payment-intent-formation
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "formationId": 1,
+  "clientId": 2,
+  "promoCode": "TEST_PROMO_CODE"
+}
+
+# Création d'une intention de paiement avec PayPal
+POST {{apiUrl}}/stripe/create-paypal-payment
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "formationId": 1,
+  "clientId": 2,
+  "promoCode": "TEST_PROMO_CODE"
+}
+
+# Capture d'un paiement PayPal
+POST {{apiUrl}}/stripe/capture-paypal-payment
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "orderID": "REPLACE_WITH_PAYPAL_ORDER_ID",
+  "clientId": 2,
+  "formationId": 1,
+  "promoCode": "TEST_PROMO_CODE"
+}
+
+# Vérification et capture d'un paiement PayPal
+POST {{apiUrl}}/stripe/verify-paypal-payment
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "orderID": "REPLACE_WITH_PAYPAL_ORDER_ID",
+  "clientId": 2,
+  "formationId": 1,
+  "promoCode": "TEST_PROMO_CODE"
+}

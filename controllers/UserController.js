@@ -1,6 +1,13 @@
 const User = require('../models/userModel');
 
 class UserController {
+
+  /**
+   * Enregistre un nouvel utilisateur dans le système.
+   * 
+   * @param {Object} req - L'objet de la requête HTTP, contenant les informations de l'utilisateur.
+   * @param {Object} res - L'objet de la réponse HTTP.
+   */
   static async registerUser(req, res) {
     const { email, adresse, type,numero_telephone, nom, prenom, nom_entreprise, numero_tva, password, numero_entreprise, adresse_facturation, verificationToken} = req.body;
 
@@ -13,6 +20,12 @@ class UserController {
     }
   }
 
+  /**
+   * Récupère les informations d'un client par son identifiant.
+   * 
+   * @param {Object} req - L'objet de la requête HTTP, contenant l'identifiant du client dans req.params.id_client.
+   * @param {Object} res - L'objet de la réponse HTTP.
+   */
   static async getInfo(req,res){
     const id_client = req.params.id_client;
 
@@ -26,6 +39,12 @@ class UserController {
 
   }
 
+    /**
+   * Met à jour les informations d'un utilisateur.
+   * 
+   * @param {Object} req - L'objet de la requête HTTP, contenant l'identifiant du client et les nouvelles informations dans req.body.
+   * @param {Object} res - L'objet de la réponse HTTP.
+   */
   static async updateUser(req, res){
     const id_client = req.params.id_client;
     const {  email, newPassword, adresse, type, numero_telephone, nom, prenom, nom_entreprise, numero_tva , numero_entreprise } = req.body;
@@ -46,6 +65,12 @@ class UserController {
 
   }
 
+  /**
+   * Initie une demande de réinitialisation de mot de passe pour l'utilisateur.
+   * 
+   * @param {Object} req - L'objet de la requête HTTP, contenant l'email de l'utilisateur dans req.body.email.
+   * @param {Object} res - L'objet de la réponse HTTP.
+   */
   static async requestPasswordReset(req, res) {
     const { email } = req.body;
     if (!email) {
@@ -61,7 +86,12 @@ class UserController {
     }
   }
 
-  // Méthode pour réinitialiser le mot de passe
+ /**
+   * Réinitialise le mot de passe de l'utilisateur.
+   * 
+   * @param {Object} req - L'objet de la requête HTTP, contenant le token et le nouveau mot de passe dans req.body.
+   * @param {Object} res - L'objet de la réponse HTTP.
+   */
 static async resetPassword(req, res) {
   const { token, newPassword } = req.body;
   if (!token || !newPassword) {
@@ -77,6 +107,12 @@ static async resetPassword(req, res) {
   }
 }
 
+/**
+   * Vérifie le statut de vérification d'un utilisateur à l'aide d'un token.
+   * 
+   * @param {Object} req - L'objet de la requête HTTP, contenant le token de vérification dans req.query.verificationToken.
+   * @param {Object} res - L'objet de la réponse HTTP.
+   */
   static async verifyStatus(req,res) {
   const { verificationToken } = req.query;
 

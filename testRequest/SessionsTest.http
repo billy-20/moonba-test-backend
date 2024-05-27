@@ -1,0 +1,82 @@
+@apiUrl = http://localhost:3000
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NDMsImVtYWlsIjoiYmlsYWxlbGhhZGRhZGkucHJvQGdtYWlsLmNvbSIsInJvbGUiOiJBZG1pbiIsImlhdCI6MTcxNjI4Nzc0MywiZXhwIjoxNzE2MjkxMzQzfQ.8HKne881XLXEf3Jb0eaxrSdgtaLlamN31absS9BqYFU
+
+# Obtenir les sessions disponibles pour une formation spécifique
+# Cette requête récupère toutes les sessions disponibles pour une formation donnée.
+# L'identifiant de la formation est passé dans l'URL.
+###
+GET {{apiUrl}}/sessions/sessionsDisponibles/2
+Authorization: Bearer {{token}}
+
+
+# Obtenir les inscriptions pour une session spécifique
+# Cette requête récupère la liste des participants inscrits pour une session donnée.
+# L'identifiant de la session est passé dans l'URL.
+###
+GET {{apiUrl}}/sessions/listeInscrits/33
+Authorization: Bearer {{token}}
+
+
+# Ajouter des places à une session spécifique
+# Cette requête augmente le nombre de places disponibles pour une session donnée.
+# L'identifiant de la session est passé dans l'URL. Nécessite des privilèges d'admin.
+###
+PUT {{apiUrl}}/sessions/addNombrePlaces/33
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "additionalPlaces": 5
+}
+
+
+# Assigner une nouvelle session à une formation
+# Cette requête crée et assigne une nouvelle session à une formation spécifiée.
+# Nécessite des privilèges d'admin.
+###
+POST {{apiUrl}}/sessions/assignerSession
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "formationId": 1,
+  "dateSession": "2024-06-15",
+  "nombrePlaces": 30,
+  "adresse": "1234 Boulevard de l'Exemple, Ville, Pays",
+  "info_supplementaire": "Session matinale"
+}
+
+# Ajouter une session à une formation si des sessions existantes sont disponibles
+# Cette requête ajoute une session à une formation donnée.
+# L'identifiant de la formation est passé dans l'URL. Nécessite des privilèges d'admin.
+###
+POST {{apiUrl}}/sessions/ajouterSession/1
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "dateSession": "2024-06-20",
+  "nombrePlaces": 25,
+  "adresse": "1234 Avenue des Exemples, Ville, Pays",
+  "info_supplementaire": "Session après-midi"
+}
+
+# Change la session d'une inscription
+# Cette requête permet de changer la session associée à une inscription existante.
+# Les détails nécessaires sont passés dans le corps de la requête.
+###
+PUT {{apiUrl}}/sessions/inscriptions/changeSession
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "inscriptionId": 1,
+  "newSessionId": 2
+}
+
+# Obtenir toutes les sessions qui ont des inscriptions
+# Cette requête récupère toutes les sessions qui ont au moins une inscription.
+###
+GET {{apiUrl}}/sessions/getallSessions
+Authorization: Bearer {{token}}
+

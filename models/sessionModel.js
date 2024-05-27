@@ -3,7 +3,12 @@ const pool = require('../db');
 
 class Session {
    
-
+ /**
+     * Récupère tous les participants inscrits à une session donnée.
+     * 
+     * @param {number} sessionId - L'identifiant de la session.
+     * @returns {Promise<Array>} Liste des participants inscrits.
+     */
     static async getInscritsParSession(sessionId) {
         const query = `
             SELECT 
@@ -36,7 +41,11 @@ class Session {
         }
     }
     
-
+/**
+     * Récupère toutes les sessions qui ont des inscriptions.
+     * 
+     * @returns {Promise<Array>} Liste des sessions avec inscriptions.
+     */
     static async getAllSessionsWithInscription() {
         const query = `
             SELECT DISTINCT s.id_session, s.adresse, s.date /* Assurez-vous d'ajuster les colonnes selon votre schéma */
@@ -61,6 +70,12 @@ class Session {
         }
     }
     
+     /**
+     * Ajoute une place à une session spécifiée.
+     * 
+     * @param {number} idSession - L'identifiant de la session.
+     * @returns {Promise<Object>} Session avec le nombre de places mis à jour.
+     */
 static async addNombrePlaces(idSession){
 
     const query = `UPDATE sessions 
@@ -82,7 +97,12 @@ static async addNombrePlaces(idSession){
     }
 }
 
-
+/**
+     * Récupère les sessions disponibles pour une formation donnée.
+     * 
+     * @param {number} formationId - L'identifiant de la formation.
+     * @returns {Promise<Array>} Liste des sessions disponibles.
+     */
 static async getSessionsDisponibles(formationId) {
     const query = `
         SELECT s.* FROM Sessions s
@@ -97,6 +117,16 @@ static async getSessionsDisponibles(formationId) {
     }
 }
 
+ /**
+     * Assigner une nouvelle session à une formation avec les détails spécifiés.
+     * 
+     * @param {number} formationId - L'identifiant de la formation.
+     * @param {Date} dateSession - La date de la session.
+     * @param {number} nombrePlaces - Le nombre de places disponibles pour la session.
+     * @param {string} adresse - L'adresse où se déroulera la session.
+     * @param {string} info_supplementaire - Informations supplémentaires sur la session.
+     * @returns {Promise<Object>} La session créée.
+     */
 static async assignerSessionAUneFormation(formationId, dateSession, nombrePlaces, adresse, info_supplementaire ) {
     const client = await pool.connect();
 
@@ -114,7 +144,6 @@ static async assignerSessionAUneFormation(formationId, dateSession, nombrePlaces
         const result = await client.query(insertQuery, values);
 
         await client.query('COMMIT');
-        console.log("Session assignée avec succès à la formation.");
         return result.rows[0]; 
     } catch (error) {
         await client.query('ROLLBACK');
@@ -125,6 +154,16 @@ static async assignerSessionAUneFormation(formationId, dateSession, nombrePlaces
     }
 }
 
+/**
+     * Ajoute une session à une formation si des sessions existantes sont disponibles.
+     * 
+     * @param {number} formId - L'identifiant de la formation.
+     * @param {Date} dateSession - La date de la session.
+     * @param {number} nombrePlaces - Le nombre de places disponibles pour la session.
+     * @param {string} adresse - L'adresse où se déroulera la session.
+     * @param {string} infoSupplementaire - Informations supplémentaires sur la session.
+     * @returns {Promise<Object>} La session ajoutée.
+     */
 static async ajouterSessionAFormation(formId, dateSession, nombrePlaces, adresse, infoSupplementaire) {
     try {
         const existingSessions = await this.getSessionsDisponibles(formId);
@@ -140,7 +179,13 @@ static async ajouterSessionAFormation(formId, dateSession, nombrePlaces, adresse
     }
 }
 
-
+ /**
+     * Change la session d'une inscription existante, avec vérification des règles métier.
+     * 
+     * @param {number} inscriptionId - L'identifiant de l'inscription.
+     * @param {number} newSessionId - L'identifiant de la nouvelle session.
+     * @returns {Promise<Object>} Information sur le changement de session.
+     */
 static async changeSession(inscriptionId, newSessionId) {
     const client = await pool.connect();
     try {
@@ -154,7 +199,6 @@ static async changeSession(inscriptionId, newSessionId) {
         const { a_change_de_session, id_session, nb_changes } = rows[0];
 
         if (a_change_de_session && nb_changes >= 2) {
-            console.log("Nombre maximal de changements de session déjà effectué.");
             throw new Error('Nombre maximal de changements de session déjà effectué.');
         }
 
@@ -179,7 +223,6 @@ static async changeSession(inscriptionId, newSessionId) {
         await client.query('UPDATE Sessions SET nombre_places = nombre_places - 1 WHERE id_session = $1', [newSessionId]);
 
         await client.query('COMMIT');
-        console.log("Change session : OK");
         return { message: 'Session changée avec succès.' };
     } catch (error) {
         await client.query('ROLLBACK');

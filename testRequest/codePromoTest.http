@@ -1,35 +1,51 @@
-###
-POST http://localhost:3000/promoCode/createCodePromo HTTP/1.1
+
+@apiUrl = http://localhost:3000
+
+// token admin pour les tests
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NDMsImVtYWlsIjoiYmlsYWxlbGhhZGRhZGkucHJvQGdtYWlsLmNvbSIsInJvbGUiOiJBZG1pbiIsImlhdCI6MTcxNjI4Nzc0MywiZXhwIjoxNzE2MjkxMzQzfQ.8HKne881XLXEf3Jb0eaxrSdgtaLlamN31absS9BqYFU
+
+### Création d'un nouveau code promo
+# Crée un code promo avec le code "TEST_CODE_PROMO", un rabais de 15%, 
+# actif du 1er juin 2021 au 31 août 2021, et marqué comme actif.
+POST {{apiUrl}}/promoCode/createCodePromo
+Authorization: Bearer {{token}}
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NDMsImVtYWlsIjoiYmlsYWxlbGhhZGRhZGkucHJvQGdtYWlsLmNvbSIsInJvbGUiOiJBZG1pbiIsImlhdCI6MTcwOTIwMDUxOCwiZXhwIjoxNzA5MjA0MTE4fQ.qsmhGfEh6PU3Q0K-vofluFwrprPQIjVH7AlYJCt1dOQ
 
 {
-    "code": "TEST123456",
-    "discount": 50,
-    "start_date": "2023-01-01", 
-    "end_date":"2023-12-31",
-    "is_active": true
+  "code": "TEST_PROMO_CODE",
+  "discount": 15,
+  "start_date": "2021-06-01",
+  "end_date": "2021-08-31",
+  "is_active": true
 }
 
-###
-GET http://localhost:3000/promoCode/getAllPromoCodes HTTP/1.1
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NDMsImVtYWlsIjoiYmlsYWxlbGhhZGRhZGkucHJvQGdtYWlsLmNvbSIsInJvbGUiOiJBZG1pbiIsImlhdCI6MTcwOTIwMTI5MCwiZXhwIjoxNzA5MjA0ODkwfQ.MojyYVy9LdF7A7lper9Mqm10UlVcUsLZZqfhGxSzk9Q
 
 
-###
-DELETE http://localhost:3000/promoCode/deletePromoCode/7 HTTP/1.1
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NDMsImVtYWlsIjoiYmlsYWxlbGhhZGRhZGkucHJvQGdtYWlsLmNvbSIsInJvbGUiOiJBZG1pbiIsImlhdCI6MTcwOTIwMTI5MCwiZXhwIjoxNzA5MjA0ODkwfQ.MojyYVy9LdF7A7lper9Mqm10UlVcUsLZZqfhGxSzk9Q
+### Récupération de tous les codes promo
+# Récupère la liste de tous les codes promo disponibles dans la base de données.
+GET {{apiUrl}}/promoCode/getAllPromoCodes
+Authorization: Bearer {{token}}
 
 
-###
-PUT http://localhost:3000/promoCode/updatePromoCode/7 HTTP/1.1
+### Suppression d'un code promo
+# Supprime le code promo ayant l'identifiant spécifique 12.
+DELETE {{apiUrl}}/promoCode/deletePromoCode/13
+Authorization: Bearer {{token}}
+
+
+### Mise à jour d'un code promo
+# Met à jour le code promo avec l'ID 12 pour changer son code en "ASUS22",
+# le rabais à 20%, actif du 1er septembre 2022 au 30 novembre 2022,
+# et le marque comme inactif.
+PUT {{apiUrl}}/promoCode/updatePromoCode/12
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NDMsImVtYWlsIjoiYmlsYWxlbGhhZGRhZGkucHJvQGdtYWlsLmNvbSIsInJvbGUiOiJBZG1pbiIsImlhdCI6MTcwOTIwMTI5MCwiZXhwIjoxNzA5MjA0ODkwfQ.MojyYVy9LdF7A7lper9Mqm10UlVcUsLZZqfhGxSzk9Q
+Authorization: Bearer {{token}}
 
 {
-    "code":"test updated",
-    "discount": 60, 
-    "start_date": "2023-11-23", 
-    "end_date": "2023-11-24", 
-    "is_active": false 
+  "code": "ASUS22",
+  "discount": 20,
+  "start_date": "2022-09-01",
+  "end_date": "2022-11-30",
+  "is_active": false
 }
+
